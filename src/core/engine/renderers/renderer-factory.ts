@@ -1,0 +1,29 @@
+import type { DesignElement } from '@/core/models';
+import type { IElementRenderer } from './base-renderer';
+import { RectangleRenderer } from './rectangle-renderer';
+import { CircleRenderer } from './circle-renderer';
+
+/**
+ * 元素渲染器工厂
+ * 负责根据元素类型返回对应的渲染器
+ */
+export class ElementRendererFactory {
+    private renderers: IElementRenderer[] = [
+        new RectangleRenderer(),
+        new CircleRenderer(),
+    ];
+
+    /**
+     * 获取元素对应的渲染器
+     */
+    getRenderer(element: DesignElement): IElementRenderer | null {
+        return this.renderers.find(renderer => renderer.canRender(element)) || null;
+    }
+
+    /**
+     * 注册新的渲染器
+     */
+    registerRenderer(renderer: IElementRenderer): void {
+        this.renderers.push(renderer);
+    }
+}
