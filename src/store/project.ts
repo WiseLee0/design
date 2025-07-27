@@ -4,6 +4,7 @@ import { createStoreUtils } from '@/utils/create-store';
 // 创建一些模拟数据
 const mockElements: DesignElement[] = [
     {
+        id: '0',
         type: "RECTANGLE",
         matrix: [1, 0, 0, 1, 10, 10],
         width: 100,
@@ -17,6 +18,7 @@ const mockElements: DesignElement[] = [
         }]
     },
     {
+        id: '1',
         type: "CIRCLE",
         matrix: [1, 0, 0, 1, 150, 50],
         width: 80,

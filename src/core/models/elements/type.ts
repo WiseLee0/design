@@ -1,5 +1,6 @@
 
 export interface DesignElement {
+    id: string;
     type: "RECTANGLE" | "CIRCLE"
     matrix: number[];
     width: number;
