@@ -3,14 +3,14 @@ import { type DesignElement } from '@/core/models';
 import { ElementRendererFactory } from './elements/renderer-factory';
 import { getProjectState } from '@/store/project';
 import { InteractionController } from '../interaction/interaction-controller';
-import { GhostRenderer } from './selection/ghost-renderer';
+import { SelectionRendererFactory } from './selection/renderer-factory';
 
 class Renderer {
     private canvasKit!: CanvasKit;
     private surface!: Surface;
     private elementFactory = new ElementRendererFactory();
     private interactionController?: InteractionController;
-    private ghostSelection = new GhostRenderer()
+    private selectionFactory = new SelectionRendererFactory()
 
     async init() {
         const canvasKit = await InitCanvasKit({
@@ -99,9 +99,10 @@ class Renderer {
      * 渲染元素列表
      */
     private renderElements(elements: DesignElement[]): void {
-        elements.forEach(element => {
+        if (!elements?.length) return;
+        for (const element of elements) {
             this.renderElement(element);
-        });
+        }
     }
 
     /**
@@ -126,9 +127,7 @@ class Renderer {
      * 渲染选择框
      */
     private renderSelection() {
-        if (this.ghostSelection.canRender()) {
-            this.ghostSelection.render(this.canvasKit, this.surface.getCanvas())
-        }
+        this.selectionFactory.execture(this.canvasKit, this.surface.getCanvas())
     }
 
     /**
@@ -144,24 +143,6 @@ class Renderer {
      */
     getInteractionController(): InteractionController | undefined {
         return this.interactionController;
-    }
-
-    /**
-     * 重置视口
-     */
-    resetViewport(): void {
-        if (this.interactionController) {
-            this.interactionController.resetViewport();
-        }
-    }
-
-    /**
-     * 设置缩放限制
-     */
-    setScaleLimits(minScale: number, maxScale: number): void {
-        if (this.interactionController) {
-            this.interactionController.setScaleLimits(minScale, maxScale);
-        }
     }
 
     /**

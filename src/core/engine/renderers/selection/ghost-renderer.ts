@@ -1,11 +1,9 @@
 import type { CanvasKit, Canvas } from 'canvaskit-wasm';
 import { THEME_COLOR } from '@/core/models';
 import { getSelectionState } from '@/store/selection';
+import type { ISelectionRenderer } from './type';
 
-/**
- * 圆形渲染器
- */
-export class GhostRenderer {
+export class GhostRenderer implements ISelectionRenderer {
     canRender(): boolean {
         const ghostBox = getSelectionState('ghostBox');
         return ghostBox[2] !== 0 && ghostBox[3] !== 0
