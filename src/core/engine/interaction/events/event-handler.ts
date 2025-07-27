@@ -1,19 +1,17 @@
-import { getHotKeyState } from '@/store/hotkey';
 import type { ViewportManager } from '../viewport';
-import { matchZoomScale } from '@/utils/zoom-scale';
+import { IdleState, PanningState, SelectingState, type IState } from './states';
 
 /**
  * 事件处理器
- * 负责处理画布上的鼠标和触摸事件
+ * 负责处理画布上的鼠标和触摸事件，并使用状态机模式管理交互。
  */
 export class EventHandler {
-    private canvas: HTMLCanvasElement;
-    private viewportManager: ViewportManager;
+    public canvas: HTMLCanvasElement;
+    public viewportManager: ViewportManager;
 
-    // 拖拽状态
-    private isDragging = false;
-    private lastMouseX = 0;
-    private lastMouseY = 0;
+    // 状态机相关属性
+    public states: { idle: IState; panning: IState; selecting: IState };
+    private currentState: IState;
 
     // 事件监听器引用，用于清理
     private eventListeners: Array<{ element: EventTarget; type: string; listener: EventListener }> = [];
@@ -22,7 +20,29 @@ export class EventHandler {
         this.canvas = canvas;
         this.viewportManager = viewportManager;
 
+        // 初始化所有状态
+        this.states = {
+            idle: new IdleState(this),
+            panning: new PanningState(this),
+            selecting: new SelectingState(this),
+        };
+
+        // 设置初始状态
+        this.currentState = this.states.idle;
+        this.currentState.enter();
+
         this.setupEvents();
+    }
+
+    /**
+     * 切换状态
+     * @param newState 要切换到的新状态
+     * @param args 传递给新状态 enter 方法的参数
+     */
+    transitionTo(newState: IState, ...args: any[]): void {
+        this.currentState.exit();
+        this.currentState = newState;
+        this.currentState.enter(...args);
     }
 
     /**
@@ -35,68 +55,33 @@ export class EventHandler {
     }
 
     /**
-     * 设置鼠标滚轮事件（缩放）
+     * 设置鼠标滚轮事件，并委托给当前状态处理。
      */
     private setupWheelEvent(): void {
         const wheelHandler = (e: WheelEvent) => {
-            if (getHotKeyState('isMainPressed')) {
-                e.preventDefault();
-
-                // 获取鼠标在画布上的位置
-                const rect = this.canvas.getBoundingClientRect();
-                const centerX = e.clientX - rect.left;
-                const centerY = e.clientY - rect.top;
-
-                // 计算缩放增量 - 参考 Figma 的滚轮缩放
-                // deltaY 通常为 100 的倍数，我们将其转换为合理的缩放步数
-                const delta = -e.deltaY / 100;
-
-                // 执行缩放
-                this.viewportManager.zoomDelta(delta, centerX, centerY);
-                return;
-            }
-            const deltaX = -e.deltaX;
-            const deltaY = -e.deltaY;
-            this.viewportManager.pan(deltaX, deltaY);
+            this.currentState.onWheel(e);
         };
-
         this.addEventListener(this.canvas, 'wheel', wheelHandler);
     }
 
     /**
-     * 设置鼠标事件（拖拽平移）
+     * 设置鼠标事件，并委托给当前状态处理。
      */
     private setupMouseEvents(): void {
-        // 鼠标按下
         const mouseDownHandler = (e: MouseEvent) => {
-            // 只处理左键和中键
-            if (e.button === 1) {
-                this.startDrag(e.clientX, e.clientY);
-                e.preventDefault();
-            }
+            this.currentState.onMouseDown(e);
         };
 
-        // 鼠标移动
         const mouseMoveHandler = (e: MouseEvent) => {
-            if (this.isDragging) {
-                this.updateDrag(e.clientX, e.clientY);
-                e.preventDefault();
-            }
+            this.currentState.onMouseMove(e);
         };
 
-        // 鼠标释放
         const mouseUpHandler = (e: MouseEvent) => {
-            if (this.isDragging) {
-                this.endDrag();
-                e.preventDefault();
-            }
+            this.currentState.onMouseUp(e);
         };
 
-        // 鼠标离开画布
-        const mouseLeaveHandler = () => {
-            if (this.isDragging) {
-                this.endDrag();
-            }
+        const mouseLeaveHandler = (e: MouseEvent) => {
+            this.currentState.onMouseLeave(e);
         };
 
         this.addEventListener(this.canvas, 'mousedown', mouseDownHandler);
@@ -106,75 +91,13 @@ export class EventHandler {
     }
 
     /**
-     * 设置键盘事件（快捷键支持）
+     * 设置键盘事件，并委托给当前状态处理。
      */
     private setupKeyboardEvents(): void {
         const keyDownHandler = (e: KeyboardEvent) => {
-            // Ctrl/Cmd + 0: 重置视口
-            if (getHotKeyState('isMainPressed') && e.key === '0') {
-                e.preventDefault();
-                this.viewportManager.reset();
-            }
-
-            // Ctrl/Cmd + =: 放大
-            if (getHotKeyState('isMainPressed') && e.key === '=') {
-                e.preventDefault();
-                const rect = this.canvas.getBoundingClientRect();
-                const centerX = rect.width / 2;
-                const centerY = rect.height / 2;
-                const { scale } = this.viewportManager.getState();
-                this.viewportManager.zoom(matchZoomScale(scale, true), centerX, centerY);
-            }
-
-            // Ctrl/Cmd + -: 缩小
-            if (getHotKeyState('isMainPressed') && e.key === '-') {
-                e.preventDefault();
-                const rect = this.canvas.getBoundingClientRect();
-                const centerX = rect.width / 2;
-                const centerY = rect.height / 2;
-                const { scale } = this.viewportManager.getState();
-                this.viewportManager.zoom(matchZoomScale(scale, false), centerX, centerY);
-            }
+            this.currentState.onKeyDown(e);
         };
-
         this.addEventListener(document, 'keydown', keyDownHandler);
-    }
-
-    /**
-     * 开始拖拽
-     */
-    private startDrag(clientX: number, clientY: number): void {
-        this.isDragging = true;
-        this.lastMouseX = clientX;
-        this.lastMouseY = clientY;
-
-        // 改变鼠标样式
-        this.canvas.style.cursor = 'grabbing';
-    }
-
-    /**
-     * 更新拖拽
-     */
-    private updateDrag(clientX: number, clientY: number): void {
-        if (!this.isDragging) return;
-
-        const deltaX = clientX - this.lastMouseX;
-        const deltaY = clientY - this.lastMouseY;
-
-        this.viewportManager.pan(deltaX, deltaY);
-
-        this.lastMouseX = clientX;
-        this.lastMouseY = clientY;
-    }
-
-    /**
-     * 结束拖拽
-     */
-    private endDrag(): void {
-        this.isDragging = false;
-
-        // 恢复鼠标样式
-        this.canvas.style.cursor = 'default';
     }
 
     /**
@@ -200,6 +123,9 @@ export class EventHandler {
      * 销毁事件处理器，清理所有事件监听器
      */
     destroy(): void {
+        // 退出当前状态，以防需要任何清理
+        this.currentState.exit();
+
         this.eventListeners.forEach(({ element, type, listener }) => {
             element.removeEventListener(type, listener);
         });

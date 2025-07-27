@@ -1,14 +1,16 @@
 import InitCanvasKit, { type CanvasKit, type Surface } from 'canvaskit-wasm';
-import type { DesignElement } from '@/core/models';
-import { ElementRendererFactory } from './renderer-factory';
+import { type DesignElement } from '@/core/models';
+import { ElementRendererFactory } from './elements/renderer-factory';
 import { getProjectState } from '@/store/project';
 import { InteractionController } from '../interaction/interaction-controller';
+import { GhostRenderer } from './selection/ghost-renderer';
 
 class Renderer {
     private canvasKit!: CanvasKit;
     private surface!: Surface;
-    private rendererFactory = new ElementRendererFactory();
+    private elementFactory = new ElementRendererFactory();
     private interactionController?: InteractionController;
+    private ghostSelection = new GhostRenderer()
 
     async init() {
         const canvasKit = await InitCanvasKit({
@@ -39,8 +41,6 @@ class Renderer {
         this.interactionController.onViewportChange(() => {
             this.forceRender();
         });
-
-        // this.fitToContent()
 
         this.renderLoop();
     }
@@ -85,6 +85,9 @@ class Renderer {
         // 渲染所有元素
         this.renderElements(elements);
 
+        // 渲染选择框
+        this.renderSelection();
+
         // 恢复变换状态
         canvas.restore();
 
@@ -108,7 +111,7 @@ class Renderer {
         if (!element.visible) return;
 
         // 获取对应的渲染器
-        const renderer = this.rendererFactory.getRenderer(element);
+        const renderer = this.elementFactory.getRenderer(element);
         if (!renderer) {
             console.warn(`未找到类型为 ${element.type} 的渲染器`);
             return;
@@ -120,18 +123,20 @@ class Renderer {
     }
 
     /**
+     * 渲染选择框
+     */
+    private renderSelection() {
+        if (this.ghostSelection.canRender()) {
+            this.ghostSelection.render(this.canvasKit, this.surface.getCanvas())
+        }
+    }
+
+    /**
      * 手动触发重新渲染
      * 当 store 数据变化时可以调用此方法
      */
     forceRender(): void {
         this.render();
-    }
-
-    /**
-     * 注册新的渲染器
-     */
-    registerRenderer(renderer: any): void {
-        this.rendererFactory.registerRenderer(renderer);
     }
 
     /**
@@ -148,66 +153,6 @@ class Renderer {
         if (this.interactionController) {
             this.interactionController.resetViewport();
         }
-    }
-
-    /**
-     * 适应内容大小
-     */
-    fitToContent(): void {
-        if (!this.interactionController) return;
-
-        const elements = getProjectState('mockElements');
-        if (elements.length === 0) return;
-
-        // 计算所有元素的边界框
-        let minX = Infinity, minY = Infinity;
-        let maxX = -Infinity, maxY = -Infinity;
-
-        elements.forEach(element => {
-            if (!element.visible) return;
-
-            // 获取元素的变换矩阵
-            const [a, b, c, d, e, f] = element.matrix;
-
-            // 计算元素的四个角点
-            const corners = [
-                { x: 0, y: 0 },
-                { x: element.width, y: 0 },
-                { x: element.width, y: element.height },
-                { x: 0, y: element.height }
-            ];
-
-            // 应用变换矩阵到每个角点
-            corners.forEach(corner => {
-                const x = a * corner.x + c * corner.y + e;
-                const y = b * corner.x + d * corner.y + f;
-
-                minX = Math.min(minX, x);
-                minY = Math.min(minY, y);
-                maxX = Math.max(maxX, x);
-                maxY = Math.max(maxY, y);
-            });
-        });
-
-        // 如果有有效的边界框，则适应内容
-        if (minX !== Infinity && minY !== Infinity && maxX !== -Infinity && maxY !== -Infinity) {
-            const contentBounds = {
-                x: minX,
-                y: minY,
-                width: maxX - minX,
-                height: maxY - minY
-            };
-
-            this.interactionController.fitToContent(contentBounds);
-        }
-    }
-
-    /**
-     * 获取鼠标位置的世界坐标
-     */
-    getWorldCoordinates(clientX: number, clientY: number): { x: number; y: number } | null {
-        if (!this.interactionController) return null;
-        return this.interactionController.getWorldCoordinates(clientX, clientY);
     }
 
     /**

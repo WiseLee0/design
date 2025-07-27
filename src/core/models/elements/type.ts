@@ -11,6 +11,8 @@ export interface DesignElement {
 
 export type DesignColor = [number, number, number, number]
 
+export type XYWH = [number, number, number, number]
+
 export type DesignBlendMode = "NORMAL"
 
 export interface FillPaint {

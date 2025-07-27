@@ -19,11 +19,4 @@ export class ElementRendererFactory {
     getRenderer(element: DesignElement): IElementRenderer | null {
         return this.renderers.find(renderer => renderer.canRender(element)) || null;
     }
-
-    /**
-     * 注册新的渲染器
-     */
-    registerRenderer(renderer: IElementRenderer): void {
-        this.renderers.push(renderer);
-    }
 }

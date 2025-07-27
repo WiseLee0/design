@@ -25,6 +25,7 @@ export class ViewportManager {
      * @param centerY 缩放中心点Y坐标
      */
     zoomDelta(delta: number, centerX: number, centerY: number) {
+        if (delta === 0) return;
         const oldScale = this.scale;
 
         let scaleFactor: number;
@@ -101,6 +102,7 @@ export class ViewportManager {
      * @param deltaY Y轴平移距离
      */
     pan(deltaX: number, deltaY: number) {
+        if (deltaX === 0 && deltaY === 0) return;
         this.offsetX += deltaX;
         this.offsetY += deltaY;
 
