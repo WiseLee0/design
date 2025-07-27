@@ -39,19 +39,25 @@ export class EventHandler {
      */
     private setupWheelEvent(): void {
         const wheelHandler = (e: WheelEvent) => {
-            e.preventDefault();
+            if (getHotKeyState('isMainPressed')) {
+                e.preventDefault();
 
-            // 获取鼠标在画布上的位置
-            const rect = this.canvas.getBoundingClientRect();
-            const centerX = e.clientX - rect.left;
-            const centerY = e.clientY - rect.top;
+                // 获取鼠标在画布上的位置
+                const rect = this.canvas.getBoundingClientRect();
+                const centerX = e.clientX - rect.left;
+                const centerY = e.clientY - rect.top;
 
-            // 计算缩放增量 - 参考 Figma 的滚轮缩放
-            // deltaY 通常为 100 的倍数，我们将其转换为合理的缩放步数
-            const delta = -e.deltaY / 100;
+                // 计算缩放增量 - 参考 Figma 的滚轮缩放
+                // deltaY 通常为 100 的倍数，我们将其转换为合理的缩放步数
+                const delta = -e.deltaY / 100;
 
-            // 执行缩放
-            this.viewportManager.zoomDelta(delta, centerX, centerY);
+                // 执行缩放
+                this.viewportManager.zoomDelta(delta, centerX, centerY);
+                return;
+            }
+            const deltaX = -e.deltaX;
+            const deltaY = -e.deltaY;
+            this.viewportManager.pan(deltaX, deltaY);
         };
 
         this.addEventListener(this.canvas, 'wheel', wheelHandler);
