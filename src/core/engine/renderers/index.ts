@@ -1,1 +1,1 @@
-export { CanvasRenderer } from './canvas-renderer';
+export { CanvasRenderer, markRenderDirty } from './canvas-renderer';

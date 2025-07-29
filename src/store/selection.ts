@@ -1,4 +1,4 @@
-import type { XYWH } from '@/core/models/elements';
+import type { XYWH } from '@/core/models';
 import { createStoreUtils } from '@/utils/create-store';
 
 interface SelectionInterface {

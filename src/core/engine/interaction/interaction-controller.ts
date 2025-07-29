@@ -14,8 +14,15 @@ export class InteractionController {
         this.canvas = canvas;
         this.viewportManager = new ViewportManager();
         this.eventHandler = new EventHandler(canvas, this.viewportManager);
-        
+
         this.setupViewportListener();
+    }
+
+    /**
+     * 获取缩放值
+     */
+    get scale() {
+        return this.viewportManager.getState().scale
     }
 
     /**

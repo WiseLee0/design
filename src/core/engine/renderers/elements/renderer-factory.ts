@@ -1,4 +1,4 @@
-import type { DesignElement } from '@/core/models';
+import type { DesignElement, SceneNode } from '@/core/models';
 import type { IElementRenderer } from './base-renderer';
 import { RectangleRenderer } from './rectangle-renderer';
 import { CircleRenderer } from './circle-renderer';
@@ -16,7 +16,7 @@ export class ElementRendererFactory {
     /**
      * 获取元素对应的渲染器
      */
-    getRenderer(element: DesignElement): IElementRenderer | null {
-        return this.renderers.find(renderer => renderer.canRender(element)) || null;
+    getRenderer(node: SceneNode): IElementRenderer | null {
+        return this.renderers.find(renderer => renderer.canRender(node)) || null;
     }
 }

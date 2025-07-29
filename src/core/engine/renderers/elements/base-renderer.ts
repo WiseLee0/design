@@ -1,5 +1,5 @@
 import type { CanvasKit, Canvas, Paint } from 'canvaskit-wasm';
-import type { DesignElement, FillPaint } from '@/core/models';
+import type { FillPaint, SceneNode } from '@/core/models';
 
 /**
  * 元素渲染器接口
@@ -8,12 +8,12 @@ export interface IElementRenderer {
     /**
      * 判断是否可以渲染该元素
      */
-    canRender(element: DesignElement): boolean;
+    canRender(element: SceneNode): boolean;
 
     /**
      * 渲染元素
      */
-    render(canvasKit: CanvasKit, canvas: Canvas, element: DesignElement): void;
+    render(canvasKit: CanvasKit, canvas: Canvas, node: SceneNode): void;
 }
 
 /**
@@ -21,25 +21,25 @@ export interface IElementRenderer {
  * 提供通用的变换、样式处理逻辑
  */
 export abstract class BaseRenderer implements IElementRenderer {
-    abstract canRender(element: DesignElement): boolean;
-    abstract renderShape(canvasKit: CanvasKit, canvas: Canvas, element: DesignElement, paint: Paint): void;
+    abstract canRender(node: SceneNode): boolean;
+    abstract renderShape(canvasKit: CanvasKit, canvas: Canvas, node: SceneNode, paint: Paint): void;
 
-    render(canvasKit: CanvasKit, canvas: Canvas, element: DesignElement): void {
-        if (!element.visible) return;
+    render(canvasKit: CanvasKit, canvas: Canvas, node: SceneNode): void {
+        if (!node.visible) return;
 
         canvas.save();
 
         // 应用变换矩阵
-        this.applyTransform(canvas, element.matrix);
+        this.applyTransform(canvas, node.matrix);
 
         // 应用透明度
-        this.applyOpacity(canvas, element.opacity);
+        this.applyOpacity(canvas, node.opacity);
 
         // 处理填充样式
-        element.fillPaints.forEach(fillPaint => {
+        node.fillPaints.forEach(fillPaint => {
             if (fillPaint.visible) {
                 const paint = this.createPaint(canvasKit, fillPaint);
-                this.renderShape(canvasKit, canvas, element, paint);
+                this.renderShape(canvasKit, canvas, node, paint);
                 paint.delete();
             }
         });

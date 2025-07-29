@@ -1,19 +1,19 @@
 import type { CanvasKit, Canvas, Paint } from 'canvaskit-wasm';
-import type { DesignElement } from '@/core/models';
+import type { SceneNode } from '@/core/models';
 import { BaseRenderer } from './base-renderer';
 
 /**
  * 矩形渲染器
  */
 export class RectangleRenderer extends BaseRenderer {
-  canRender(element: DesignElement): boolean {
-    return element.type === 'RECTANGLE';
+  canRender(node: SceneNode): boolean {
+    return node.type === 'RECTANGLE';
   }
 
-  renderShape(canvasKit: CanvasKit, canvas: Canvas, element: DesignElement, paint: Paint): void {
+  renderShape(canvasKit: CanvasKit, canvas: Canvas, node: SceneNode, paint: Paint): void {
     // 创建矩形区域
-    const rect = canvasKit.XYWHRect(0, 0, element.width, element.height);
-    
+    const rect = canvasKit.XYWHRect(0, 0, node.width, node.height);
+
     // 绘制填充矩形
     canvas.drawRect(rect, paint);
   }

@@ -1,3 +1,4 @@
+import { setViewportState } from "@/store/viewport";
 
 interface ViewportState {
     scale: number;
@@ -224,6 +225,11 @@ export class ViewportManager {
      */
     private notifyStateChange() {
         const state = this.getState();
+        setViewportState({
+            scale: state.scale,
+            x: state.offsetX,
+            y: state.offsetY
+        })
         this.listeners.forEach(listener => listener(state));
     }
 

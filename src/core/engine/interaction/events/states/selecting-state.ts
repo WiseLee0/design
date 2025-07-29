@@ -1,6 +1,8 @@
 import { setSelectionState } from '@/store/selection';
 import type { EventHandler } from '../event-handler';
 import { BaseState } from './state';
+import { markRenderDirty } from '@/core/engine/renderers';
+import { getViewportState } from '@/store/viewport';
 
 /**
  * 框选状态 - 当用户在画布上按住左键拖动时进入此状态。
@@ -16,8 +18,8 @@ export class SelectingState extends BaseState {
     }
 
     /**
-     * 进入选择状态。
-     * @param event 触发状态切换的鼠标事件，用于获取初始位置。
+     * 进入选择状态
+     * @param event 触发状态切换的鼠标事件，用于获取初始位置
      */
     enter(event: MouseEvent): void {
         const { canvas, viewportManager } = this.context;
@@ -33,10 +35,11 @@ export class SelectingState extends BaseState {
         this.selecting = true
         this.event = event
         this.nearOrBeyondBoundary(rect)
+        markRenderDirty()
     }
 
     /**
-     * 退出选择状态，隐藏选择框。
+     * 退出选择状态，隐藏选择框
      */
     exit(): void {
         this.selecting = false
@@ -48,19 +51,22 @@ export class SelectingState extends BaseState {
 
     onMouseMove(event: MouseEvent): void {
         this.event = event
+        markRenderDirty()
     }
 
 
     /**
-     * 处理鼠标松开，执行选择逻辑并切换回空闲状态。
+     * 处理鼠标松开，执行选择逻辑并切换回空闲状态
      */
     onMouseUp(event: MouseEvent): void {
         event.preventDefault();
         this.event = event
         this.context.transitionTo(this.context.states.idle);
+        markRenderDirty()
     }
 
     private nearOrBeyondBoundary(rect: DOMRect) {
+        const scale = getViewportState('scale');
         const run = () => {
             if (!this.selecting || !this.event) return;
             const { viewportManager } = this.context;
@@ -74,7 +80,7 @@ export class SelectingState extends BaseState {
 
             const pos = viewportManager.screenToWorld(left, top)
             setSelectionState({
-                ghostBox: [pos.x, pos.y, width, height]
+                ghostBox: [pos.x, pos.y, width / scale, height / scale]
             })
 
             // 如果框选接近或者超越边界，则移动画布
