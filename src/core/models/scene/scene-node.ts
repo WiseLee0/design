@@ -1,7 +1,7 @@
 import type { IHittable, Point, BoundingBox } from '@/core/engine/collision';
 import type { DesignElement, FillPaint } from './type';
 import { mat3, vec2 } from 'gl-matrix';
-import { hitStrategies } from './hit-strategies';
+import { hitGhostStrategies, hitPointStrategies } from './hit-strategies';
 import { deepClone } from '@/utils/deep-clone';
 
 // 前向声明，避免循环依赖
@@ -35,6 +35,7 @@ export class SceneNode implements IHittable {
     private _dirtyChildren: boolean = false;
     private cacheTransform: mat3 = mat3.create();
     private cacheBBox: BoundingBox | null = null;
+    private _cachedRotation: number | null = null;
 
     // 场景树引用
     private sceneTree?: ISceneTree;
@@ -59,6 +60,7 @@ export class SceneNode implements IHittable {
     }
     set matrix(m: DesignElement['matrix']) {
         this._matrix = [...m];
+        this._cachedRotation = null;
         this.markTransformDirty();
     }
 
@@ -107,6 +109,28 @@ export class SceneNode implements IHittable {
         this.markDirty();
     }
 
+    // ----- rotation -----
+    get rotation(): number {
+        // 如果缓存值存在且矩阵没有变化，直接返回缓存值
+        if (this._cachedRotation !== null && !this._dirtyTransform) {
+            return this._cachedRotation;
+        }
+
+        // 从矩阵中提取旋转角度
+        // 2D变换矩阵的形式为：
+        // | a c tx |
+        // | b d ty |
+        // | 0 0 1  |
+        // 其中旋转角度可以通过 atan2(b, a) 计算
+        const a = this._matrix[0];
+        const b = this._matrix[1];
+
+        // 计算旋转角度
+        this._cachedRotation = Math.atan2(b, a) * (180 / Math.PI);
+
+        return this._cachedRotation;
+    }
+
     /** 设置新尺寸并标记脏 */
     setSize(w: number, h: number) {
         this._width = w;
@@ -142,6 +166,7 @@ export class SceneNode implements IHittable {
     /** 标记变换为脏状态 */
     markTransformDirty(propagate: boolean = true): void {
         this._dirtyTransform = true;
+        this._cachedRotation = null;
         this.markDirty(propagate);
     }
 
@@ -253,17 +278,13 @@ export class SceneNode implements IHittable {
         mat3.invert(inv, this.getAbsoluteTransform());
         const local = vec2.fromValues(pt.x, pt.y);
         vec2.transformMat3(local, local, inv);
-        const fn = hitStrategies[this.type];
+        const fn = hitPointStrategies[this.type];
         return fn ? fn(local, this) : false;
     }
 
     intersectsWith(box: BoundingBox): boolean {
-        const b = this.getAbsoluteBoundingBox();
-        return (
-            b.x < box.x + box.width &&
-            b.x + b.width > box.x &&
-            b.y < box.y + box.height &&
-            b.y + b.height > box.y
-        );
+        if (!this._visible) return false;
+        const fn = hitGhostStrategies[this.type];
+        return fn ? fn(box, this) : false;
     }
 }

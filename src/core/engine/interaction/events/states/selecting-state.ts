@@ -3,6 +3,9 @@ import type { EventHandler } from '../event-handler';
 import { BaseState } from './state';
 import { markRenderDirty } from '@/core/engine/renderers';
 import { getViewportState } from '@/store/viewport';
+import type { XYWH } from '@/core/models';
+import { CollisionDetector } from '@/core/engine/collision';
+import { getProjectState } from '@/store/project';
 
 /**
  * 框选状态 - 当用户在画布上按住左键拖动时进入此状态。
@@ -34,7 +37,7 @@ export class SelectingState extends BaseState {
         // 判断是否超越边界或者接近边界
         this.selecting = true
         this.event = event
-        this.nearOrBeyondBoundary(rect)
+        this._nearOrBeyondBoundary(rect)
         markRenderDirty()
     }
 
@@ -65,7 +68,7 @@ export class SelectingState extends BaseState {
         markRenderDirty()
     }
 
-    private nearOrBeyondBoundary(rect: DOMRect) {
+    private _nearOrBeyondBoundary(rect: DOMRect) {
         const scale = getViewportState('scale');
         const run = () => {
             if (!this.selecting || !this.event) return;
@@ -79,8 +82,9 @@ export class SelectingState extends BaseState {
             const top = Math.min(currentY, this.startY);
 
             const pos = viewportManager.screenToWorld(left, top)
+            const ghostBox = [pos.x, pos.y, width / scale, height / scale] as XYWH
             setSelectionState({
-                ghostBox: [pos.x, pos.y, width / scale, height / scale]
+                ghostBox
             })
 
             // 如果框选接近或者超越边界，则移动画布
@@ -100,9 +104,26 @@ export class SelectingState extends BaseState {
             }
 
             this.context.viewportManager.pan(deltaX, deltaY);
-
+            this._hitTest(ghostBox)
             requestAnimationFrame(run)
         }
         requestAnimationFrame(run)
+    }
+
+    /**
+     * 框选碰撞检测
+     */
+    private _hitTest(box: XYWH) {
+        const sceneTree = getProjectState('sceneTree');
+        const boundingBox = {
+            x: box[0],
+            y: box[1],
+            width: box[2],
+            height: box[3]
+        }
+        const nodes = CollisionDetector.findIntersecting(boundingBox, sceneTree.root.getChildren())
+        setSelectionState({
+            ids: new Set(nodes.map(item => item.id))
+        })
     }
 }

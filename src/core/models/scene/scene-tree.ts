@@ -9,7 +9,7 @@ export class SceneTree {
     readonly root: SceneNode;
     private nodeMap: Map<string, SceneNode> = new Map();
     private sceneChangeCallback?: () => void;
-    
+
     // 脏节点管理
     private dirtyNodes = new Set<SceneNode>();
     private flushScheduled = false;
@@ -95,7 +95,7 @@ export class SceneTree {
             this.buildRecursive(el, this.root, nodeMap);
         }
         this.nodeMap = nodeMap;
-        
+
         // 标记场景重建完成，触发变化通知
         this.markNodeDirty(this.root);
     }
@@ -103,10 +103,10 @@ export class SceneTree {
     private buildRecursive(el: DesignElement, parent: SceneNode, map: Map<string, SceneNode>) {
         // 创建节点
         const node = new SceneNode(el);
-        
+
         // 设置场景树引用
         node.setSceneTree(this);
-        
+
         parent.appendChild(node);
         map.set(node.id, node);
 
@@ -124,7 +124,12 @@ export class SceneTree {
     }
 
     /** 批量查找节点 */
-    findByIds(ids: string[]): (SceneNode | undefined)[] {
-        return ids.map(i => this.nodeMap.get(i));
+    findByIds(ids: string[] | Set<string> = []): SceneNode[] {
+        const result = []
+        for (const id of ids) {
+            const node = this.nodeMap.get(id)
+            if (node) result.push(node);
+        }
+        return result
     }
 }

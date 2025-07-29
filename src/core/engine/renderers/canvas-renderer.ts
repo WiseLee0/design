@@ -1,6 +1,6 @@
 import InitCanvasKit, { type Canvas, type CanvasKit, type Surface } from 'canvaskit-wasm';
 import { ElementRendererFactory } from './elements/renderer-factory';
-import { getProjectState } from '@/store/project';
+import { getProjectState, setProjectState } from '@/store/project';
 import { InteractionController } from '../interaction/interaction-controller';
 import { SelectionRendererFactory } from './selection/renderer-factory';
 import { SceneTree } from '@/core/models/scene/scene-tree';
@@ -58,6 +58,7 @@ class Renderer {
         });
 
         this.sceneTree.build(elements);
+        setProjectState({ sceneTree : this.sceneTree })
 
         // 初始标记需要渲染
         this.markNeedsRender();

@@ -1,4 +1,4 @@
-import type { DesignElement } from '@/core/models';
+import type { SceneTree, DesignElement } from '@/core/models';
 import { createStoreUtils } from '@/utils/create-store';
 
 // 创建一些模拟数据
@@ -16,8 +16,7 @@ const mockElements: DesignElement[] = [
             visible: true,
             blendMode: "NORMAL"
         }]
-    },
-    {
+    }, {
         id: '1',
         type: "CIRCLE",
         matrix: [1, 0, 0, 1, 150, 50],
@@ -30,14 +29,29 @@ const mockElements: DesignElement[] = [
             visible: true,
             blendMode: "NORMAL"
         }]
+    }, {
+        id: '2',
+        type: "RECTANGLE",
+        matrix: [0.6203069686889648, -0.7843591570854187, 0.7843591570854187, 0.6203069686889648, 200, 200],
+        width: 80,
+        height: 180,
+        visible: true,
+        opacity: 0.8,
+        fillPaints: [{
+            color: [0, 1, 0, 1],
+            visible: true,
+            blendMode: "NORMAL"
+        }]
     }
 ];
 
 interface ProjectState {
     mockElements: DesignElement[]
+    sceneTree: SceneTree
 }
 const _projectState = {
-    mockElements
+    mockElements,
+    sceneTree: null!
 }
 
 export const {
