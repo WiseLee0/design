@@ -41,6 +41,16 @@ export class IdleState extends BaseState {
             const delta = -event.deltaY / 100;
             viewportManager.zoomDelta(delta, centerX, centerY);
         } else {
+            // mac缩放处理
+            if (event.metaKey || event.ctrlKey) {
+                const { canvas, viewportManager } = this.context;
+                const rect = canvas.getBoundingClientRect();
+                const centerX = event.clientX - rect.left;
+                const centerY = event.clientY - rect.top;
+                const delta = -event.deltaY / 5;
+                viewportManager.zoomDelta(delta, centerX, centerY);
+                return;
+            }
             const deltaX = -event.deltaX;
             const deltaY = -event.deltaY;
             this.context.viewportManager.pan(deltaX, deltaY);
