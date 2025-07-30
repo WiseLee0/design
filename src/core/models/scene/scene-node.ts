@@ -272,6 +272,22 @@ export class SceneNode implements IHittable {
         return bbox;
     }
 
+    /**
+     * 描边包围盒
+     * 包含描边的包围盒
+     */
+    getStrokeBox(): BoundingBox {
+        return this.getAbsoluteBoundingBox()
+    }
+
+    /**
+     * 渲染包围盒
+     * 包含描边、阴影、模糊等影响渲染的包围盒
+     */
+    getRenderBox(): BoundingBox {
+        return this.getAbsoluteBoundingBox()
+    }
+
     hitTest(pt: Point): boolean {
         if (!this._visible) return false;
         const inv = mat3.create();

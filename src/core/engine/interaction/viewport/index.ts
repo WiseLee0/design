@@ -4,10 +4,13 @@ interface ViewportState {
     scale: number;
     offsetX: number;
     offsetY: number;
+    width: number;
+    height: number;
     transformMatrix: number[];
 }
 
 export class ViewportManager {
+    private canvas: HTMLCanvasElement
     private scale = 1;
     private offsetX = 0;
     private offsetY = 0;
@@ -18,6 +21,10 @@ export class ViewportManager {
 
     // 事件监听器
     private listeners: Array<(state: ViewportState) => void> = [];
+
+    constructor(canvas: HTMLCanvasElement) {
+        this.canvas = canvas
+    }
 
     /**
      * 缩放方法
@@ -159,6 +166,8 @@ export class ViewportManager {
             scale: this.scale,
             offsetX: this.offsetX,
             offsetY: this.offsetY,
+            width: this.canvas.width / this.scale,
+            height: this.canvas.width / this.scale,
             transformMatrix: this.getTransformMatrix()
         };
     }
@@ -228,7 +237,9 @@ export class ViewportManager {
         setViewportState({
             scale: state.scale,
             x: state.offsetX,
-            y: state.offsetY
+            y: state.offsetY,
+            width: state.width / state.scale,
+            height: state.height / state.scale
         })
         this.listeners.forEach(listener => listener(state));
     }

@@ -2,6 +2,7 @@ import type { DesignElement } from './type';
 import type { SceneNode } from './scene-node';
 import { vec2 } from 'gl-matrix';
 import type { BoundingBox } from '@/core/engine/collision';
+import { hitMatrixNodeTest } from '@/utils/hit-test';
 
 /** 命中测试策略集合 */
 export const hitPointStrategies: Record<DesignElement['type'], (pt: vec2, node: SceneNode) => boolean> = {
@@ -20,14 +21,7 @@ export const hitPointStrategies: Record<DesignElement['type'], (pt: vec2, node: 
 
 export const hitGhostStrategies: Record<DesignElement['type'], (box: BoundingBox, node: SceneNode) => boolean> = {
   RECTANGLE: (box, node) => {
-    const b = node.getAbsoluteBoundingBox();
-    const testAABB = b.x < box.x + box.width &&
-      b.x + b.width > box.x &&
-      b.y < box.y + box.height &&
-      b.y + b.height > box.y
-    if (!testAABB) return false;
-    // 进一步检测
-    return true;
+    return hitMatrixNodeTest({ matrix: [1, 0, 0, 1, box.x, box.y], width: box.width, height: box.height }, node)
   },
   CIRCLE: (box, node) => {
     const b = node.getAbsoluteBoundingBox();

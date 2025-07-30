@@ -12,7 +12,7 @@ export class InteractionController {
 
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
-        this.viewportManager = new ViewportManager();
+        this.viewportManager = new ViewportManager(canvas);
         this.eventHandler = new EventHandler(canvas, this.viewportManager);
 
         this.setupViewportListener();

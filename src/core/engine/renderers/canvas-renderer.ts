@@ -5,6 +5,7 @@ import { InteractionController } from '../interaction/interaction-controller';
 import { SelectionRendererFactory } from './selection/renderer-factory';
 import { SceneTree } from '@/core/models/scene/scene-tree';
 import { SceneNode } from '@/core/models/scene/scene-node';
+import { hitMatrixNodeTest } from '@/utils/hit-test';
 
 class Renderer {
     private canvasKit!: CanvasKit;
@@ -13,6 +14,7 @@ class Renderer {
     private interactionController?: InteractionController;
     private selectionFactory = new SelectionRendererFactory();
     private sceneTree!: SceneTree;
+    private domCanvas!: HTMLCanvasElement;
 
     // 脏标记驱动渲染
     private needsRender: boolean = false;
@@ -30,6 +32,7 @@ class Renderer {
         canvas.height = innerHeight * pixelRatio;
         canvas.style.width = `${innerWidth}px`;
         canvas.style.height = `${innerHeight}px`;
+        this.domCanvas = canvas;
 
         const surface = canvasKit.MakeWebGLCanvasSurface(canvas, canvasKit.ColorSpace.SRGB, {});
         if (!surface) {
@@ -58,7 +61,7 @@ class Renderer {
         });
 
         this.sceneTree.build(elements);
-        setProjectState({ sceneTree : this.sceneTree })
+        setProjectState({ sceneTree: this.sceneTree })
 
         // 初始标记需要渲染
         this.markNeedsRender();
@@ -132,6 +135,11 @@ class Renderer {
      */
     private renderNode(canvas: Canvas, node: SceneNode): void {
         if (!node.visible) return;
+        // 视口剔除
+        if (this.shouldViewportCulling(node)) {
+            console.log(`视口剔除元素: ${node.id}`)
+            return;
+        }
         const renderer = this.elementFactory.getRenderer(node);
         if (renderer) {
             renderer.render(this.canvasKit, canvas, node);
@@ -139,6 +147,16 @@ class Renderer {
         for (const child of node.getChildren()) {
             this.renderNode(canvas, child);
         }
+    }
+
+    /**
+     * 检测是否需要视口剔除
+     */
+    shouldViewportCulling(node: SceneNode) {
+        if (node.type === "ROOT") return false;
+        return false;
+        // const state = this.interactionController!.getViewportState();
+        // return !hitMatrixNodeTest({ matrix: state?.transformMatrix, width: state?.width, height: state?.height }, node)
     }
 
     /**
