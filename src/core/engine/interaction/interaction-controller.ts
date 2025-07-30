@@ -14,8 +14,6 @@ export class InteractionController {
         this.canvas = canvas;
         this.viewportManager = new ViewportManager(canvas);
         this.eventHandler = new EventHandler(canvas, this.viewportManager);
-
-        this.setupViewportListener();
     }
 
     /**
@@ -23,16 +21,6 @@ export class InteractionController {
      */
     get scale() {
         return this.viewportManager.getState().scale
-    }
-
-    /**
-     * 设置视口状态变化监听器
-     */
-    private setupViewportListener(): void {
-        this.viewportManager.addStateChangeListener((state) => {
-            // 可以在这里添加额外的逻辑，比如更新UI显示当前缩放比例
-            console.log(`视口状态更新: 缩放=${state.scale.toFixed(2)}, 偏移=(${state.offsetX.toFixed(1)}, ${state.offsetY.toFixed(1)})`);
-        });
     }
 
     /**

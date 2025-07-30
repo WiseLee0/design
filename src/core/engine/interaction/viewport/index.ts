@@ -2,8 +2,8 @@ import { setViewportState } from "@/store/viewport";
 
 interface ViewportState {
     scale: number;
-    offsetX: number;
-    offsetY: number;
+    x: number;
+    y: number;
     width: number;
     height: number;
     transformMatrix: number[];
@@ -164,10 +164,10 @@ export class ViewportManager {
     getState(): ViewportState {
         return {
             scale: this.scale,
-            offsetX: this.offsetX,
-            offsetY: this.offsetY,
-            width: this.canvas.width / this.scale,
-            height: this.canvas.width / this.scale,
+            x: -this.offsetX / this.scale,  // 视口左上角的世界坐标
+            y: -this.offsetY / this.scale,  // 视口左上角的世界坐标
+            width: (this.canvas.width / devicePixelRatio) / this.scale,
+            height: (this.canvas.height / devicePixelRatio) / this.scale,
             transformMatrix: this.getTransformMatrix()
         };
     }
@@ -236,10 +236,10 @@ export class ViewportManager {
         const state = this.getState();
         setViewportState({
             scale: state.scale,
-            x: state.offsetX,
-            y: state.offsetY,
-            width: state.width / state.scale,
-            height: state.height / state.scale
+            x: state.x,
+            y: state.y,
+            width: state.width,
+            height: state.height
         })
         this.listeners.forEach(listener => listener(state));
     }

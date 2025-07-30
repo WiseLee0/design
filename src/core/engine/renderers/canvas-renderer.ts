@@ -14,7 +14,6 @@ class Renderer {
     private interactionController?: InteractionController;
     private selectionFactory = new SelectionRendererFactory();
     private sceneTree!: SceneTree;
-    private domCanvas!: HTMLCanvasElement;
 
     // 脏标记驱动渲染
     private needsRender: boolean = false;
@@ -32,7 +31,6 @@ class Renderer {
         canvas.height = innerHeight * pixelRatio;
         canvas.style.width = `${innerWidth}px`;
         canvas.style.height = `${innerHeight}px`;
-        this.domCanvas = canvas;
 
         const surface = canvasKit.MakeWebGLCanvasSurface(canvas, canvasKit.ColorSpace.SRGB, {});
         if (!surface) {
@@ -71,7 +69,6 @@ class Renderer {
     private renderLoop() {
         const renderFrame = () => {
             if (this.needsRender && !this.isRendering) {
-                console.log('render');
                 this.render();
             }
             requestAnimationFrame(renderFrame);
@@ -136,10 +133,7 @@ class Renderer {
     private renderNode(canvas: Canvas, node: SceneNode): void {
         if (!node.visible) return;
         // 视口剔除
-        if (this.shouldViewportCulling(node)) {
-            console.log(`视口剔除元素: ${node.id}`)
-            return;
-        }
+        if (this.shouldViewportCulling(node)) return;
         const renderer = this.elementFactory.getRenderer(node);
         if (renderer) {
             renderer.render(this.canvasKit, canvas, node);
@@ -150,13 +144,16 @@ class Renderer {
     }
 
     /**
-     * 检测是否需要视口剔除
+     * 视口剔除，不在视口范围内的元素不渲染
      */
     shouldViewportCulling(node: SceneNode) {
         if (node.type === "ROOT") return false;
-        return false;
-        // const state = this.interactionController!.getViewportState();
-        // return !hitMatrixNodeTest({ matrix: state?.transformMatrix, width: state?.width, height: state?.height }, node)
+        const viewport = this.interactionController!.getViewportState();
+        return !hitMatrixNodeTest({
+            matrix: [1, 0, 0, 1, viewport.x, viewport.y],
+            width: viewport?.width,
+            height: viewport?.height
+        }, node);
     }
 
     /**
