@@ -232,7 +232,7 @@ export class SceneNode implements IHittable {
     }
 
     /** 世界变换 */
-    getAbsoluteTransform(): mat3 {
+    private getAbsoluteTransform(): mat3 {
         if (!this._dirty && !this._dirtyTransform) {
             return mat3.clone(this.cacheTransform);
         }
@@ -245,6 +245,13 @@ export class SceneNode implements IHittable {
         this._dirty = false;
         this._dirtyTransform = false;
         return t;
+    }
+
+    getAbsoluteMatrix(): number[] {
+        // gl-matrix（列主序）：[a, b, 0, c, d, 0, tx, ty, 1]
+        const [a, b, _aa, c, d, _bb, e, f, _cc] = this.getAbsoluteTransform();
+        // CanvasKit（行主序）：[a, c, tx, b, d, ty, 0, 0, 1]
+        return [a, b, c, d, e, f];
     }
 
     /** 世界包围盒 */

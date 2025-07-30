@@ -1,6 +1,5 @@
 import InitCanvasKit, { type Canvas, type CanvasKit, type Surface } from 'canvaskit-wasm';
 import { ElementRendererFactory } from './elements/renderer-factory';
-import { getProjectState, setProjectState } from '@/store/project';
 import { InteractionController } from '../interaction/interaction-controller';
 import { SelectionRendererFactory } from './selection/renderer-factory';
 import { SceneTree } from '@/core/models/scene/scene-tree';
@@ -19,7 +18,7 @@ class Renderer {
     private needsRender: boolean = false;
     private isRendering: boolean = false;
 
-    async init() {
+    async init(sceneTree: SceneTree) {
         const canvasKit = await InitCanvasKit({
             locateFile: (file) => `/node_modules/canvaskit-wasm/bin/${file}`,
         });
@@ -50,16 +49,13 @@ class Renderer {
         });
 
         // 初始构建场景树
-        const elements = getProjectState('mockElements');
-        this.sceneTree = new SceneTree();
+        this.sceneTree = sceneTree;
 
         // 设置场景树变化回调
         this.sceneTree.onSceneChange(() => {
             this.markNeedsRender();
         });
 
-        this.sceneTree.build(elements);
-        setProjectState({ sceneTree: this.sceneTree })
 
         // 初始标记需要渲染
         this.markNeedsRender();
@@ -149,11 +145,17 @@ class Renderer {
     shouldViewportCulling(node: SceneNode) {
         if (node.type === "ROOT") return false;
         const viewport = this.interactionController!.getViewportState();
+        const renderBox = node.getRenderBox();
+        // 都转换成世界坐标进行测试
         return !hitMatrixNodeTest({
             matrix: [1, 0, 0, 1, viewport.x, viewport.y],
             width: viewport?.width,
             height: viewport?.height
-        }, node);
+        }, {
+            matrix: [1, 0, 0, 1, renderBox.x, renderBox.y],
+            width: renderBox.width,
+            height: renderBox.height
+        });
     }
 
     /**

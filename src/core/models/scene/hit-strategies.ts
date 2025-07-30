@@ -21,7 +21,11 @@ export const hitPointStrategies: Record<DesignElement['type'], (pt: vec2, node: 
 
 export const hitGhostStrategies: Record<DesignElement['type'], (box: BoundingBox, node: SceneNode) => boolean> = {
   RECTANGLE: (box, node) => {
-    return hitMatrixNodeTest({ matrix: [1, 0, 0, 1, box.x, box.y], width: box.width, height: box.height }, node)
+    return hitMatrixNodeTest({ matrix: [1, 0, 0, 1, box.x, box.y], width: box.width, height: box.height }, {
+      matrix: node.getAbsoluteMatrix(),
+      width: node.width,
+      height: node.height
+    })
   },
   CIRCLE: (box, node) => {
     const b = node.getAbsoluteBoundingBox();
