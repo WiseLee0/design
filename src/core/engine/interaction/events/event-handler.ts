@@ -1,5 +1,5 @@
 import type { ViewportManager } from '../viewport';
-import { IdleState, PanningState, SelectingState, type IState } from './states';
+import { IdleState, PanningState, SelectingState, MovingState, type IState } from './states';
 
 /**
  * 事件处理器
@@ -10,7 +10,7 @@ export class EventHandler {
     public viewportManager: ViewportManager;
 
     // 状态机相关属性
-    public states: { idle: IState; panning: IState; selecting: IState };
+    public states: { idle: IState; panning: IState; selecting: IState; moving: IState };
     private currentState: IState;
 
     // 事件监听器引用，用于清理
@@ -25,6 +25,7 @@ export class EventHandler {
             idle: new IdleState(this),
             panning: new PanningState(this),
             selecting: new SelectingState(this),
+            moving: new MovingState(this)
         };
 
         // 设置初始状态

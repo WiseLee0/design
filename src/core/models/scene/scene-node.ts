@@ -64,6 +64,18 @@ export class SceneNode implements IHittable {
         this.markTransformDirty();
     }
 
+    // ----- translate -----
+    translate(dx: number, dy: number) {
+        this._matrix[4] += dx;
+        this._matrix[5] += dy;
+        this.markTransformDirty();
+    }
+    setPosition(x: number, y: number) {
+        this._matrix[4] = x;
+        this._matrix[5] = y;
+        this.markTransformDirty();
+    }
+
     // ----- width -----
     get width(): number {
         return this._width;
