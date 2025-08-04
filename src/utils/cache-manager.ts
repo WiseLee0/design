@@ -7,7 +7,7 @@ const CACHE_DEPENDENCIES: Record<string, string[]> = {
   'transform': ['matrix', 'parent'],
   'boundingBox': ['transform', 'width', 'height', 'children'],
   'rotation': ['matrix'],
-  'strokePath': ['width', 'height'],
+  'hoverPath': ['width', 'height'],
   'strokeBox': ['boundingBox', 'strokeWidth'],
   'renderBox': ['strokeBox', 'shadow', 'blur'],
 };

@@ -4,7 +4,7 @@ import { mat3, vec2 } from 'gl-matrix';
 import { hitGhostStrategies, hitPointStrategies } from './hit-strategies';
 import { deepClone } from '@/utils/deep-clone';
 import { CacheManager } from '@/utils/cache-manager';
-import { calcNodeStrokePath } from '@/utils/path';
+import { calcNodeHoverPath } from '@/utils/path';
 import type { Path } from 'canvaskit-wasm';
 
 // 前向声明，避免循环依赖
@@ -321,12 +321,12 @@ export class SceneNode implements IHittable {
     }
 
     /**
-     * 获取描边路径
+     * 获取悬停路径
      */
-    getStrokePath() {
-        return this.cacheManager.get('strokePath', (oldPath: Path) => {
+    getHoverPath() {
+        return this.cacheManager.get('hoverPath', (oldPath: Path) => {
             oldPath?.delete?.();
-            return calcNodeStrokePath(this)
+            return calcNodeHoverPath(this)
         });
     }
 

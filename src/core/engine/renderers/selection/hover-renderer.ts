@@ -28,7 +28,7 @@ export class HoverRenderer implements ISelectionRenderer {
         hoverPaint.setColor(CK.Color(THEME_COLOR[0], THEME_COLOR[1], THEME_COLOR[2], 1));
         hoverPaint.setStyle(CK.PaintStyle.Stroke);
         hoverPaint.setStrokeWidth(2 / scale);
-        const path = node.getStrokePath();
+        const path = node.getHoverPath();
         canvas.drawPath(path, hoverPaint);
         canvas.restore()
         hoverPaint.delete();

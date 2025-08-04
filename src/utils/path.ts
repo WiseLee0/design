@@ -1,8 +1,8 @@
 import type { SceneNode } from "@/core/models";
 import { getProjectState } from "@/store/project";
 
-// 计算节点描边路径
-export const calcNodeStrokePath = (node: SceneNode) => {
+// 计算节点悬停路径
+export const calcNodeHoverPath = (node: SceneNode) => {
     const CK = getProjectState('CK');
     if (node.type === 'RECTANGLE') {
         const path = new CK.Path();
