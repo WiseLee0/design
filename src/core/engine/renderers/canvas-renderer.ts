@@ -31,7 +31,9 @@ class Renderer {
         canvas.style.width = `${innerWidth}px`;
         canvas.style.height = `${innerHeight}px`;
 
-        const surface = canvasKit.MakeWebGLCanvasSurface(canvas, canvasKit.ColorSpace.SRGB, {});
+        const surface = canvasKit.MakeWebGLCanvasSurface(canvas, canvasKit.ColorSpace.SRGB, {
+            antialias: 1
+        });
         if (!surface) {
             console.error('无法创建surface');
             return;
@@ -60,6 +62,11 @@ class Renderer {
         // 初始标记需要渲染
         this.markNeedsRender();
         this.renderLoop();
+
+        return {
+            canvasKit,
+            surface,
+        }
     }
 
     private renderLoop() {
@@ -85,7 +92,7 @@ class Renderer {
         const canvas = this.surface.getCanvas();
 
         // 清空画布
-        canvas.clear(this.canvasKit.TRANSPARENT);
+        canvas.clear([0.9529, 0.9568, 0.9568, 1]);
 
         // 保存当前变换状态
         canvas.save();
@@ -134,7 +141,7 @@ class Renderer {
         if (renderer) {
             renderer.render(this.canvasKit, canvas, node);
         }
-        for (const child of node.getChildren()) {
+        for (const child of node.children) {
             this.renderNode(canvas, child);
         }
     }

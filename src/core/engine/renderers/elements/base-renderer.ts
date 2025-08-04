@@ -32,13 +32,10 @@ export abstract class BaseRenderer implements IElementRenderer {
         // 应用变换矩阵
         this.applyTransform(canvas, node.matrix);
 
-        // 应用透明度
-        this.applyOpacity(canvas, node.opacity);
-
         // 处理填充样式
         node.fillPaints.forEach(fillPaint => {
             if (fillPaint.visible) {
-                const paint = this.createPaint(canvasKit, fillPaint);
+                const paint = this.createPaint(canvasKit, fillPaint, node.opacity);
                 this.renderShape(canvasKit, canvas, node, paint);
                 paint.delete();
             }
@@ -64,21 +61,11 @@ export abstract class BaseRenderer implements IElementRenderer {
     }
 
     /**
-     * 应用透明度
-     */
-    protected applyOpacity(canvas: Canvas, opacity: number): void {
-        if (opacity < 1) {
-            // 通过 Paint 的 alpha 来控制透明度
-            // 这里我们在 createPaint 中处理透明度
-        }
-    }
-
-    /**
      * 创建画笔并应用样式
      */
-    protected createPaint(canvasKit: CanvasKit, fillPaint: FillPaint): Paint {
+    protected createPaint(canvasKit: CanvasKit, fillPaint: FillPaint, opacity: number): Paint {
         const paint = new canvasKit.Paint();
-        paint.setColor(fillPaint.color);
+        paint.setColor([fillPaint.color[0], fillPaint.color[1], fillPaint.color[2], fillPaint.color[3] * opacity]);
         this.applyBlendMode(canvasKit, paint, fillPaint.blendMode);
         return paint;
     }

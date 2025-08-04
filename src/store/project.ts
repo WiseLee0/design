@@ -1,5 +1,6 @@
 import type { SceneTree, DesignElement } from '@/core/models';
 import { createStoreUtils } from '@/utils/create-store';
+import type { CanvasKit, Surface } from 'canvaskit-wasm';
 
 // 创建一些模拟数据
 const mockElements: DesignElement[] = [
@@ -23,7 +24,7 @@ const mockElements: DesignElement[] = [
         width: 80,
         height: 80,
         visible: true,
-        opacity: 0.8,
+        opacity: 1,
         fillPaints: [{
             color: [0, 1, 0, 1],
             visible: true,
@@ -32,13 +33,13 @@ const mockElements: DesignElement[] = [
     }, {
         id: '2',
         type: "RECTANGLE",
-        matrix: [0.6203069686889648, -0.7843591570854187, 0.7843591570854187, 0.6203069686889648, 200, 200],
+        matrix: [0.6203069686889648, -0.7843591570854187, 0.7843591570854187, 0.6203069686889648, 150, 150],
         width: 80,
         height: 180,
         visible: true,
         opacity: 0.8,
         fillPaints: [{
-            color: [0, 1, 0, 1],
+            color: [1, 0, 1, 1],
             visible: true,
             blendMode: "NORMAL"
         }]
@@ -48,10 +49,14 @@ const mockElements: DesignElement[] = [
 interface ProjectState {
     mockElements: DesignElement[]
     sceneTree: SceneTree
+    CK: CanvasKit
+    surface: Surface
 }
 const _projectState = {
     mockElements,
-    sceneTree: null!
+    sceneTree: null!,
+    CK: null!,
+    surface: null!,
 }
 
 export const {

@@ -1,6 +1,7 @@
 import type { Canvas, CanvasKit } from "canvaskit-wasm";
 import { GhostRenderer } from "./ghost-renderer";
 import { SelectionRenderer } from "./selection-renderer";
+import { HoverRenderer } from "./hover-renderer";
 import type { ISelectionRenderer } from "./type";
 
 /**
@@ -9,6 +10,7 @@ import type { ISelectionRenderer } from "./type";
 export class SelectionRendererFactory {
     private renderers: ISelectionRenderer[] = [
         new GhostRenderer(),
+        new HoverRenderer(),
         new SelectionRenderer(),
     ];
 

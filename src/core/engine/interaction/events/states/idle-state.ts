@@ -2,6 +2,9 @@ import { getHotKeyState } from '@/store/hotkey';
 import { matchZoomScale } from '@/utils/zoom-scale';
 import type { EventHandler } from '../event-handler';
 import { BaseState } from './state';
+import { CollisionDetector, type Point } from '@/core/engine/collision';
+import { getProjectState } from '@/store/project';
+import { getSelectionState, setSelectionState } from '@/store/selection';
 
 /**
  * 空闲状态 - 默认状态，处理非特定操作（如平移、选择）之外的通用交互。
@@ -24,6 +27,14 @@ export class IdleState extends BaseState {
             event.preventDefault();
             this.context.transitionTo(this.context.states.panning, event);
         }
+    }
+
+    /**
+     * 处理悬停事件，元素进行碰撞检测
+     */
+    onMouseMove(event: MouseEvent): void {
+        const point = this.context.getWorldCoordinates(event.clientX, event.clientY);
+        this._hoverHitTest(point)
     }
 
     /**
@@ -88,5 +99,19 @@ export class IdleState extends BaseState {
             const { scale } = viewportManager.getState();
             viewportManager.zoom(matchZoomScale(scale, false), centerX, centerY);
         }
+    }
+
+    private _hoverHitTest(point: Point) {
+        const sceneTree = getProjectState('sceneTree')
+        const node = CollisionDetector.findHit(point, sceneTree.root.children)
+        const ids = getSelectionState('ids');
+        // hover元素不能在选择框内
+        if (node?.id && ids.size > 1 && ids.has(node.id)) {
+            setSelectionState({ hoverId: null })
+            return;
+        }
+        setSelectionState({
+            hoverId: node?.id || null
+        })
     }
 }

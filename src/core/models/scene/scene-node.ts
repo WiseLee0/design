@@ -3,6 +3,7 @@ import type { DesignElement, FillPaint } from './type';
 import { mat3, vec2 } from 'gl-matrix';
 import { hitGhostStrategies, hitPointStrategies } from './hit-strategies';
 import { deepClone } from '@/utils/deep-clone';
+import { calcNodeStrokePath } from '@/utils/path';
 
 // 前向声明，避免循环依赖
 interface ISceneTree {
@@ -13,8 +14,8 @@ interface ISceneTree {
  * 场景节点 — 基础单元
  */
 export class SceneNode implements IHittable {
-    private parent: SceneNode | null = null;
-    private children: SceneNode[] = [];
+    private _parent: SceneNode | null = null;
+    private _children: SceneNode[] = [];
 
     // 存储 DesignElement 相关属性
     readonly id: string;
@@ -65,6 +66,14 @@ export class SceneNode implements IHittable {
     }
 
     // ----- translate -----
+    set x(_x: number) {
+        this._matrix[4] = _x;
+        this.markTransformDirty();
+    }
+    set y(_y: number) {
+        this._matrix[5] = _y;
+        this.markTransformDirty();
+    }
     translate(dx: number, dy: number) {
         this._matrix[4] += dx;
         this._matrix[5] += dy;
@@ -143,6 +152,16 @@ export class SceneNode implements IHittable {
         return this._cachedRotation;
     }
 
+    /** 获取子节点列表 */
+    get children(): SceneNode[] {
+        return this._children;
+    }
+
+    /** 获取父级节点 */
+    get parent(): SceneNode | null {
+        return this._parent;
+    }
+
     /** 设置新尺寸并标记脏 */
     setSize(w: number, h: number) {
         this._width = w;
@@ -154,7 +173,7 @@ export class SceneNode implements IHittable {
     setSceneTree(sceneTree: ISceneTree): void {
         this.sceneTree = sceneTree;
         // 递归设置子节点的场景树引用
-        for (const child of this.children) {
+        for (const child of this._children) {
             child.setSceneTree(sceneTree);
         }
     }
@@ -170,8 +189,8 @@ export class SceneNode implements IHittable {
     markDirty(propagate: boolean = true): void {
         this._dirty = true;
         this.notifySceneTree();
-        if (propagate && this.parent) {
-            this.parent.markDirtyChildren();
+        if (propagate && this._parent) {
+            this._parent.markDirtyChildren();
         }
     }
 
@@ -202,9 +221,9 @@ export class SceneNode implements IHittable {
     }
 
     appendChild(node: SceneNode) {
-        if (node.parent) node.parent.removeChild(node);
-        node.parent = this;
-        this.children.push(node);
+        if (node._parent) node._parent.removeChild(node);
+        node._parent = this;
+        this._children.push(node);
 
         // 为新子节点设置场景树引用
         if (this.sceneTree) {
@@ -215,23 +234,18 @@ export class SceneNode implements IHittable {
     }
 
     removeChild(node: SceneNode) {
-        const i = this.children.indexOf(node);
+        const i = this._children.indexOf(node);
         if (i > -1) {
-            node.parent = null;
-            this.children.splice(i, 1);
+            node._parent = null;
+            this._children.splice(i, 1);
             this.markDirty();
         }
     }
 
     removeChildren() {
-        for (const c of this.children) c.parent = null;
-        this.children = [];
+        for (const c of this._children) c._parent = null;
+        this._children = [];
         this.markDirty();
-    }
-
-    /** 获取子节点列表 */
-    public getChildren(): SceneNode[] {
-        return this.children;
     }
 
     /** 本地变换 */
@@ -249,8 +263,8 @@ export class SceneNode implements IHittable {
             return mat3.clone(this.cacheTransform);
         }
         let t = this.getLocalTransform();
-        if (this.parent) {
-            const pt = this.parent.getAbsoluteTransform();
+        if (this._parent) {
+            const pt = this._parent.getAbsoluteTransform();
             mat3.multiply(t, pt, t);
         }
         this.cacheTransform = mat3.clone(t);
@@ -307,6 +321,16 @@ export class SceneNode implements IHittable {
         return this.getAbsoluteBoundingBox()
     }
 
+    /**
+     * 获取描边
+     */
+    getStrokePath() {
+        return calcNodeStrokePath(this)
+    }
+
+    /**
+     * 点碰撞检测
+     */
     hitTest(pt: Point): boolean {
         if (!this._visible) return false;
         const inv = mat3.create();
@@ -317,6 +341,9 @@ export class SceneNode implements IHittable {
         return fn ? fn(local, this) : false;
     }
 
+    /**
+     * 框选碰撞检测
+     */
     intersectsWith(box: BoundingBox): boolean {
         if (!this._visible) return false;
         const fn = hitGhostStrategies[this.type];

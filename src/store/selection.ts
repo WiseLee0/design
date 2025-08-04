@@ -2,6 +2,7 @@ import type { XYWH } from '@/core/models';
 import { createStoreUtils } from '@/utils/create-store';
 import { getProjectState } from './project';
 import { mergeBoundingBoxes } from '@/utils/bounding-box';
+import { markRenderDirty } from '@/core/engine';
 
 interface SelectionBoxItem {
     matrix: number[];
@@ -12,11 +13,13 @@ interface SelectionInterface {
     ids: Set<string>
     ghostBox: XYWH
     selectionBoxs: SelectionBoxItem[]
+    hoverId: string | null
 }
 const _selection: SelectionInterface = {
     ids: new Set(),
     ghostBox: [0, 0, 0, 0],
-    selectionBoxs: []
+    selectionBoxs: [],
+    hoverId: null
 }
 
 const {
@@ -57,6 +60,9 @@ const calcSelectionBoxs = (ids: Set<string>): void => {
 const setSelectionState = (data: Partial<SelectionInterface>) => {
     if (data.ids) {
         calcSelectionBoxs(data.ids)
+    }
+    if(data.hoverId !== getSelectionState('hoverId')){
+       markRenderDirty() 
     }
     _setSelectionState(data)
 }

@@ -10,8 +10,9 @@ export const MainCanvas = () => {
         const elements = getProjectState('mockElements');
         const sceneTree = new SceneTree();
         sceneTree.build(elements);
-        setProjectState({ sceneTree })
-        CanvasRenderer.init(sceneTree);
+        CanvasRenderer.init(sceneTree).then(props => {
+            setProjectState({ sceneTree, CK: props?.canvasKit, surface: props?.surface })
+        });
     }, [])
 
     return <canvas width={innerWidth} height={innerHeight} id={'main-canvas'} />

@@ -1,6 +1,6 @@
 export interface DesignElement {
   id: string;
-  type: "RECTANGLE" | "CIRCLE" | "GROUP" | "ROOT";
+  type: "RECTANGLE" | "CIRCLE" | "ROOT";
   matrix: number[];
   width: number;
   height: number;

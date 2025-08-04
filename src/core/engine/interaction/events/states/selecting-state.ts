@@ -121,7 +121,7 @@ export class SelectingState extends BaseState {
             width: box[2],
             height: box[3]
         }
-        const nodes = CollisionDetector.findIntersecting(boundingBox, sceneTree.root.getChildren())
+        const nodes = CollisionDetector.findIntersecting(boundingBox, sceneTree.root.children)
         setSelectionState({
             ids: new Set(nodes.map(item => item.id))
         })
