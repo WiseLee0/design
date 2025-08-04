@@ -32,7 +32,6 @@ export class HoverRenderer implements ISelectionRenderer {
         canvas.drawPath(path, hoverPaint);
         canvas.restore()
         hoverPaint.delete();
-        path.delete()
     }
 
 }

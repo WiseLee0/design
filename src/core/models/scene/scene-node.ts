@@ -3,7 +3,9 @@ import type { DesignElement, FillPaint } from './type';
 import { mat3, vec2 } from 'gl-matrix';
 import { hitGhostStrategies, hitPointStrategies } from './hit-strategies';
 import { deepClone } from '@/utils/deep-clone';
+import { CacheManager } from '@/utils/cache-manager';
 import { calcNodeStrokePath } from '@/utils/path';
+import type { Path } from 'canvaskit-wasm';
 
 // 前向声明，避免循环依赖
 interface ISceneTree {
@@ -30,13 +32,8 @@ export class SceneNode implements IHittable {
     // 原始 DesignElement
     private _element: DesignElement;
 
-    // 缓存与脏标记
-    private _dirty: boolean = false;
-    private _dirtyTransform: boolean = false;
-    private _dirtyChildren: boolean = false;
-    private cacheTransform: mat3 = mat3.create();
-    private cacheBBox: BoundingBox | null = null;
-    private _cachedRotation: number | null = null;
+    // 统一缓存管理器
+    private cacheManager = new CacheManager();
 
     // 场景树引用
     private sceneTree?: ISceneTree;
@@ -51,8 +48,10 @@ export class SceneNode implements IHittable {
         this._opacity = element.opacity;
         this._fillPaints = [...element.fillPaints];
         this._element = element;
-        // 初始化时标记为脏，确保首次计算正确
-        this.markTransformDirty(false);
+        // 初始化时标记相关依赖为脏，确保首次计算正确
+        this.cacheManager.markDirty('matrix');
+        this.cacheManager.markDirty('width');
+        this.cacheManager.markDirty('height');
     }
 
     // ----- matrix -----
@@ -61,28 +60,32 @@ export class SceneNode implements IHittable {
     }
     set matrix(m: DesignElement['matrix']) {
         this._matrix = [...m];
-        this._cachedRotation = null;
-        this.markTransformDirty();
+        this.cacheManager.markDirty('matrix');
+        this.notifySceneTree();
     }
 
     // ----- translate -----
     set x(_x: number) {
         this._matrix[4] = _x;
-        this.markTransformDirty();
+        this.cacheManager.markDirty('matrix');
+        this.notifySceneTree();
     }
     set y(_y: number) {
         this._matrix[5] = _y;
-        this.markTransformDirty();
+        this.cacheManager.markDirty('matrix');
+        this.notifySceneTree();
     }
     translate(dx: number, dy: number) {
         this._matrix[4] += dx;
         this._matrix[5] += dy;
-        this.markTransformDirty();
+        this.cacheManager.markDirty('matrix');
+        this.notifySceneTree();
     }
     setPosition(x: number, y: number) {
         this._matrix[4] = x;
         this._matrix[5] = y;
-        this.markTransformDirty();
+        this.cacheManager.markDirty('matrix');
+        this.notifySceneTree();
     }
 
     // ----- width -----
@@ -91,7 +94,8 @@ export class SceneNode implements IHittable {
     }
     set width(w: number) {
         this._width = w;
-        this.markDirty();
+        this.cacheManager.markDirty('width');
+        this.notifySceneTree();
     }
 
     // ----- height -----
@@ -100,7 +104,8 @@ export class SceneNode implements IHittable {
     }
     set height(h: number) {
         this._height = h;
-        this.markDirty();
+        this.cacheManager.markDirty('height');
+        this.notifySceneTree();
     }
 
     // ----- visible -----
@@ -109,7 +114,7 @@ export class SceneNode implements IHittable {
     }
     set visible(v: boolean) {
         this._visible = v;
-        this.markDirty();
+        this.notifySceneTree();
     }
 
     // ----- opacity -----
@@ -118,7 +123,7 @@ export class SceneNode implements IHittable {
     }
     set opacity(o: number) {
         this._opacity = o;
-        this.markDirty();
+        this.notifySceneTree();
     }
 
     // ----- fillPaints -----
@@ -127,29 +132,24 @@ export class SceneNode implements IHittable {
     }
     set fillPaints(paints: FillPaint[]) {
         this._fillPaints = [...paints];
-        this.markDirty();
+        this.notifySceneTree();
     }
 
     // ----- rotation -----
     get rotation(): number {
-        // 如果缓存值存在且矩阵没有变化，直接返回缓存值
-        if (this._cachedRotation !== null && !this._dirtyTransform) {
-            return this._cachedRotation;
-        }
+        return this.cacheManager.get('rotation', () => {
+            // 从矩阵中提取旋转角度
+            // 2D变换矩阵的形式为：
+            // | a c tx |
+            // | b d ty |
+            // | 0 0 1  |
+            // 其中旋转角度可以通过 atan2(b, a) 计算
+            const a = this._matrix[0];
+            const b = this._matrix[1];
 
-        // 从矩阵中提取旋转角度
-        // 2D变换矩阵的形式为：
-        // | a c tx |
-        // | b d ty |
-        // | 0 0 1  |
-        // 其中旋转角度可以通过 atan2(b, a) 计算
-        const a = this._matrix[0];
-        const b = this._matrix[1];
-
-        // 计算旋转角度
-        this._cachedRotation = Math.atan2(b, a) * (180 / Math.PI);
-
-        return this._cachedRotation;
+            // 计算旋转角度
+            return Math.atan2(b, a) * (180 / Math.PI);
+        });
     }
 
     /** 获取子节点列表 */
@@ -166,7 +166,9 @@ export class SceneNode implements IHittable {
     setSize(w: number, h: number) {
         this._width = w;
         this._height = h;
-        this.markDirty();
+        this.cacheManager.markDirty('width');
+        this.cacheManager.markDirty('height');
+        this.notifySceneTree();
     }
 
     /** 设置场景树引用 */
@@ -178,6 +180,12 @@ export class SceneNode implements IHittable {
         }
     }
 
+    /** 通知父节点变化（内部使用） */
+    private notifyParentChange(): void {
+        this.cacheManager.markDirty('parent');
+        this.notifySceneTree();
+    }
+
     /** 通知场景树节点变脏 */
     private notifySceneTree(): void {
         if (this.sceneTree) {
@@ -185,26 +193,14 @@ export class SceneNode implements IHittable {
         }
     }
 
-    /** 标记节点为脏状态 */
-    markDirty(propagate: boolean = true): void {
-        this._dirty = true;
+    /** 标记子节点变化 */
+    private markChildrenDirty(): void {
+        this.cacheManager.markDirty('children');
         this.notifySceneTree();
-        if (propagate && this._parent) {
-            this._parent.markDirtyChildren();
+        // 向上传播，父节点的包围盒等也可能受影响
+        if (this._parent) {
+            this._parent.markChildrenDirty();
         }
-    }
-
-    /** 标记变换为脏状态 */
-    markTransformDirty(propagate: boolean = true): void {
-        this._dirtyTransform = true;
-        this._cachedRotation = null;
-        this.markDirty(propagate);
-    }
-
-    /** 标记子节点为脏状态 */
-    markDirtyChildren(): void {
-        this._dirtyChildren = true;
-        this.markDirty();
     }
 
     /** 转回设计元素 */
@@ -225,27 +221,32 @@ export class SceneNode implements IHittable {
         node._parent = this;
         this._children.push(node);
 
+        // 通知子节点父节点已变化
+        node.notifyParentChange();
+
         // 为新子节点设置场景树引用
         if (this.sceneTree) {
             node.setSceneTree(this.sceneTree);
         }
 
-        this.markDirty();
+        this.markChildrenDirty();
     }
 
     removeChild(node: SceneNode) {
         const i = this._children.indexOf(node);
         if (i > -1) {
             node._parent = null;
+            // 通知子节点父节点已变化
+            node.notifyParentChange();
             this._children.splice(i, 1);
-            this.markDirty();
+            this.markChildrenDirty();
         }
     }
 
     removeChildren() {
         for (const c of this._children) c._parent = null;
         this._children = [];
-        this.markDirty();
+        this.markChildrenDirty();
     }
 
     /** 本地变换 */
@@ -259,18 +260,14 @@ export class SceneNode implements IHittable {
 
     /** 世界变换 */
     private getAbsoluteTransform(): mat3 {
-        if (!this._dirty && !this._dirtyTransform) {
-            return mat3.clone(this.cacheTransform);
-        }
-        let t = this.getLocalTransform();
-        if (this._parent) {
-            const pt = this._parent.getAbsoluteTransform();
-            mat3.multiply(t, pt, t);
-        }
-        this.cacheTransform = mat3.clone(t);
-        this._dirty = false;
-        this._dirtyTransform = false;
-        return t;
+        return this.cacheManager.get('transform', () => {
+            let t = this.getLocalTransform();
+            if (this._parent) {
+                const pt = this._parent.getAbsoluteTransform();
+                mat3.multiply(t, pt, t);
+            }
+            return t;
+        });
     }
 
     getAbsoluteMatrix(): number[] {
@@ -282,27 +279,23 @@ export class SceneNode implements IHittable {
 
     /** 世界包围盒 */
     getAbsoluteBoundingBox(): BoundingBox {
-        if (this.cacheBBox && !this._dirtyChildren && !this._dirty && !this._dirtyTransform) {
-            return this.cacheBBox;
-        }
-        const transform = this.getAbsoluteTransform();
-        const corners: vec2[] = [
-            vec2.fromValues(0, 0),
-            vec2.fromValues(this._width, 0),
-            vec2.fromValues(this._width, this._height),
-            vec2.fromValues(0, this._height),
-        ];
-        corners.forEach(c => vec2.transformMat3(c, c, transform));
-        const xs = corners.map(c => c[0]), ys = corners.map(c => c[1]);
-        const bbox = {
-            x: Math.min(...xs),
-            y: Math.min(...ys),
-            width: Math.max(...xs) - Math.min(...xs),
-            height: Math.max(...ys) - Math.min(...ys),
-        };
-        this.cacheBBox = bbox;
-        this._dirtyChildren = false;
-        return bbox;
+        return this.cacheManager.get('boundingBox', () => {
+            const transform = this.getAbsoluteTransform();
+            const corners: vec2[] = [
+                vec2.fromValues(0, 0),
+                vec2.fromValues(this._width, 0),
+                vec2.fromValues(this._width, this._height),
+                vec2.fromValues(0, this._height),
+            ];
+            corners.forEach(c => vec2.transformMat3(c, c, transform));
+            const xs = corners.map(c => c[0]), ys = corners.map(c => c[1]);
+            return {
+                x: Math.min(...xs),
+                y: Math.min(...ys),
+                width: Math.max(...xs) - Math.min(...xs),
+                height: Math.max(...ys) - Math.min(...ys),
+            };
+        });
     }
 
     /**
@@ -310,7 +303,10 @@ export class SceneNode implements IHittable {
      * 包含描边的包围盒
      */
     getStrokeBox(): BoundingBox {
-        return this.getAbsoluteBoundingBox()
+        return this.cacheManager.get('strokeBox', () => {
+            // 目前直接返回基础包围盒，后续可以根据描边宽度扩展
+            return this.getAbsoluteBoundingBox();
+        });
     }
 
     /**
@@ -318,14 +314,20 @@ export class SceneNode implements IHittable {
      * 包含描边、阴影、模糊等影响渲染的包围盒
      */
     getRenderBox(): BoundingBox {
-        return this.getAbsoluteBoundingBox()
+        return this.cacheManager.get('renderBox', () => {
+            // 目前基于描边包围盒，后续可以根据阴影、模糊等效果扩展
+            return this.getStrokeBox();
+        });
     }
 
     /**
-     * 获取描边
+     * 获取描边路径
      */
     getStrokePath() {
-        return calcNodeStrokePath(this)
+        return this.cacheManager.get('strokePath', (oldPath: Path) => {
+            oldPath?.delete?.();
+            return calcNodeStrokePath(this)
+        });
     }
 
     /**
