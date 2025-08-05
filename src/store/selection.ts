@@ -1,6 +1,6 @@
 import type { XYWH } from '@/core/models';
 import { createStoreUtils } from '@/utils/create-store';
-import { getProjectState } from './project';
+import { findByIds } from './project';
 import { mergeBoundingBoxes } from '@/utils/bounding-box';
 import { markRenderDirty } from '@/core/engine';
 
@@ -9,17 +9,23 @@ interface SelectionBoxItem {
     width: number;
     height: number;
 }
+interface MoveInfo {
+    type: 'id' | 'selection-box'
+    value: string | number
+}
 interface SelectionInterface {
     ids: Set<string>
     ghostBox: XYWH
     selectionBoxs: SelectionBoxItem[]
     hoverId: string | null
+    moveInfo: MoveInfo | null
 }
 const _selection: SelectionInterface = {
     ids: new Set(),
     ghostBox: [0, 0, 0, 0],
     selectionBoxs: [],
-    hoverId: null
+    hoverId: null,
+    moveInfo: null
 }
 
 const {
@@ -28,13 +34,12 @@ const {
     getState: getSelectionState,
 } = createStoreUtils<SelectionInterface>(_selection);
 
-const calcSelectionBoxs = (ids: Set<string>): void => {
+export const updateSelectionBoxs = (ids: Set<string>): void => {
     if (!ids.size) {
         _setSelectionState({ selectionBoxs: [] })
         return;
     }
-    const sceneTree = getProjectState('sceneTree');
-    const nodes = sceneTree.findByIds(ids);
+    const nodes = findByIds(ids);
     const boxes = nodes.map(node => node.getAbsoluteBoundingBox())
     if (boxes.length > 1) {
         const selectionBox = mergeBoundingBoxes(boxes)
@@ -55,14 +60,15 @@ const calcSelectionBoxs = (ids: Set<string>): void => {
             }]
         })
     }
+    markRenderDirty()
 }
 
 const setSelectionState = (data: Partial<SelectionInterface>) => {
     if (data.ids) {
-        calcSelectionBoxs(data.ids)
+        updateSelectionBoxs(data.ids)
     }
-    if(data.hoverId !== getSelectionState('hoverId')){
-       markRenderDirty() 
+    if (data.hoverId !== getSelectionState('hoverId')) {
+        markRenderDirty()
     }
     _setSelectionState(data)
 }

@@ -5,6 +5,7 @@ import { BaseState } from './state';
 import { CollisionDetector, type Point } from '@/core/engine/collision';
 import { getProjectState } from '@/store/project';
 import { getSelectionState, setSelectionState } from '@/store/selection';
+import { hitMatrixNodeTest } from '@/utils/hit-test';
 
 /**
  * 空闲状态 - 默认状态，处理非特定操作（如平移、选择）之外的通用交互。
@@ -16,13 +17,21 @@ export class IdleState extends BaseState {
 
     /**
      * 处理鼠标按下事件。
-     * - 左键按下: 切换到框选状态。
+     * - 左键按下: 切换到框选 | 移动状态。
      * - 中键按下: 切换到平移状态。
      */
     onMouseDown(event: MouseEvent): void {
         if (event.button === 0) { // 0 是鼠标左键
             event.preventDefault();
-            this.context.transitionTo(this.context.states.selecting, event);
+            const point = this.context.getWorldCoordinates(event.clientX, event.clientY);
+            const isHit = this._downHitTest(point)
+            if (isHit) {
+                // 移动状态
+                this.context.transitionTo(this.context.states.moving, event);
+            } else {
+                // 框选状态
+                this.context.transitionTo(this.context.states.selecting, event);
+            }
         } else if (event.button === 1) { // 1 是鼠标中键
             event.preventDefault();
             this.context.transitionTo(this.context.states.panning, event);
@@ -101,6 +110,41 @@ export class IdleState extends BaseState {
         }
     }
 
+    private _downHitTest(point: Point) {
+        const selectionBoxs = getSelectionState('selectionBoxs');
+        // 先对选中框进行碰撞检测
+        for (let i = 0; i < selectionBoxs.length; i++) {
+            const selectionBox = selectionBoxs[i]
+            const isHit = hitMatrixNodeTest({ matrix: [1, 0, 0, 1, point.x, point.y], width: 1, height: 1 }, selectionBox)
+            if (isHit) {
+                setSelectionState({
+                    moveInfo: {
+                        type: 'selection-box',
+                        value: i
+                    }
+                })
+                return true
+            }
+        }
+        // 在对元素进行碰撞检测
+        const id = this._hoverHitTest(point)
+        if (id) {
+            setSelectionState({
+                moveInfo: {
+                    type: 'id',
+                    value: id
+                }
+            })
+            return true
+        }
+
+        // 什么都没命中
+        setSelectionState({
+            moveInfo: null
+        })
+        return false
+    }
+
     private _hoverHitTest(point: Point) {
         const sceneTree = getProjectState('sceneTree')
         const node = CollisionDetector.findHit(point, sceneTree.root.children)
@@ -108,10 +152,11 @@ export class IdleState extends BaseState {
         // hover元素不能在选择框内
         if (node?.id && ids.size > 1 && ids.has(node.id)) {
             setSelectionState({ hoverId: null })
-            return;
+            return null;
         }
         setSelectionState({
             hoverId: node?.id || null
         })
+        return node?.id || null
     }
 }

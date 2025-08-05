@@ -42,7 +42,7 @@ export class CacheManager {
    */
   markDirty(dependency: string): void {
     this.dirtyFlags.add(dependency);
-    
+
     // 清除依赖此项的所有缓存
     for (const [cacheKey, deps] of Object.entries(CACHE_DEPENDENCIES)) {
       if (deps.includes(dependency)) {
@@ -69,7 +69,7 @@ export class CacheManager {
     if (!this.cache.has(key)) {
       return true;
     }
-    
+
     // 检查依赖项是否有变化
     const deps = CACHE_DEPENDENCIES[key] || [];
     return deps.some(dep => this.dirtyFlags.has(dep));

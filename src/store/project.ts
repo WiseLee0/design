@@ -64,3 +64,19 @@ export const {
     setState: setProjectState,
     getState: getProjectState,
 } = createStoreUtils<ProjectState>(_projectState);
+
+
+export const findById = (id: string) => {
+    const sceneTree = getProjectState('sceneTree');
+    return sceneTree.findById(id)
+}
+
+export const findByIds = (ids?: string[] | Set<string>) => {
+    const sceneTree = getProjectState('sceneTree');
+    return sceneTree.findByIds(ids)
+}
+
+export const getRootNode = () => {
+    const sceneTree = getProjectState('sceneTree');
+    return sceneTree.root
+}

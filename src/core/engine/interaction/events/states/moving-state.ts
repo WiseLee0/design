@@ -1,13 +1,12 @@
-import type { SceneNode } from '@/core/models/scene/scene-node';
 import type { EventHandler } from '../event-handler';
 import { BaseState } from './state';
+import { getSelectionState, setSelectionState, updateSelectionBoxs } from '@/store/selection';
+import { findById, getRootNode } from '@/store/project';
 
 /**
  * 移动状态 - 当用户选中一个元素并拖动时进入此状态。
  */
 export class MovingState extends BaseState {
-    // 被移动的节点
-    private nodeToMove!: SceneNode;
     // 上一次鼠标在世界坐标系中的位置
     private lastWorldX = 0;
     private lastWorldY = 0;
@@ -18,18 +17,19 @@ export class MovingState extends BaseState {
 
     /**
      * 进入移动状态。
-     * @param nodeToMove 要移动的节点。
      * @param initialEvent 触发状态切换的鼠标事件，用于获取初始位置。
      */
-    enter(nodeToMove: SceneNode, initialEvent: MouseEvent): void {
-        this.nodeToMove = nodeToMove;
-        
+    enter(initialEvent: MouseEvent): void {
+        const moveInfo = getSelectionState('moveInfo')
+        if (!moveInfo) {
+            console.error('Moving State Exception')
+            this.exit()
+            return;
+        }
         // 获取初始的世界坐标
         const initialWorldCoords = this.context.getWorldCoordinates(initialEvent.clientX, initialEvent.clientY);
         this.lastWorldX = initialWorldCoords.x;
         this.lastWorldY = initialWorldCoords.y;
-
-        this.context.canvas.style.cursor = 'move';
     }
 
     /**
@@ -52,8 +52,8 @@ export class MovingState extends BaseState {
         const deltaX = currentWorldCoords.x - this.lastWorldX;
         const deltaY = currentWorldCoords.y - this.lastWorldY;
 
-        // 更新节点位置
-        this.nodeToMove.translate(deltaX, deltaY);
+        // 更新选框 | 节点位置
+        this.updatePosition(deltaX, deltaY);
 
         // 保存当前位置，用于下一次计算
         this.lastWorldX = currentWorldCoords.x;
@@ -65,6 +65,10 @@ export class MovingState extends BaseState {
      */
     onMouseUp(event: MouseEvent): void {
         event.preventDefault();
+        // 更新选框计算
+        const ids = getSelectionState('ids')
+        updateSelectionBoxs(ids)
+        // 切换回空闲状态
         this.context.transitionTo(this.context.states.idle);
     }
 
@@ -74,5 +78,27 @@ export class MovingState extends BaseState {
     onMouseLeave(event: MouseEvent): void {
         event.preventDefault();
         this.context.transitionTo(this.context.states.idle);
+    }
+
+
+    private updatePosition(deltaX: number, deltaY: number) {
+        const moveInfo = getSelectionState('moveInfo')
+        // 更新节点位置
+        if (moveInfo?.type === 'id') {
+            const node = findById(moveInfo.value as string)
+            node?.translate(deltaX, deltaY);
+        }
+        // 更新选框内节点位置
+        if (moveInfo?.type === 'selection-box') {
+            const ids = getSelectionState('ids')
+            const rootNode = getRootNode()
+            const selectionNodes = rootNode.children.filter(item => ids.has(item.id))
+            for (const item of selectionNodes) {
+                item.translate(deltaX, deltaY)
+            }
+            setSelectionState({
+                selectionBoxs: []
+            })
+        }
     }
 }

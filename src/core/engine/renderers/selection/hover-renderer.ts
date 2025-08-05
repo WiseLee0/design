@@ -1,7 +1,7 @@
 import { getSelectionState } from "@/store/selection";
 import type { CanvasKit, Canvas } from "canvaskit-wasm";
 import type { ISelectionRenderer } from "./type";
-import { getProjectState } from "@/store/project";
+import { findById } from "@/store/project";
 import { THEME_COLOR } from "@/core/models";
 import { getViewportState } from "@/store/viewport";
 
@@ -14,8 +14,7 @@ export class HoverRenderer implements ISelectionRenderer {
     render(CK: CanvasKit, canvas: Canvas): void {
         const scale = getViewportState('scale');
         const hoverId = getSelectionState('hoverId')!;
-        const sceneTree = getProjectState('sceneTree');
-        const node = sceneTree.findById(hoverId);
+        const node = findById(hoverId);
         if (!node) return;
         canvas.save()
         const hoverPaint = new CK.Paint();

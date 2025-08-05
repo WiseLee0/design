@@ -3,7 +3,7 @@ import { THEME_COLOR, type XYWH } from '@/core/models';
 import { getSelectionState } from '@/store/selection';
 import type { ISelectionRenderer } from './type';
 import { getViewportState } from '@/store/viewport';
-import { getProjectState } from '@/store/project';
+import { findByIds } from '@/store/project';
 
 export class SelectionRenderer implements ISelectionRenderer {
     canRender(): boolean {
@@ -36,8 +36,7 @@ export class SelectionRenderer implements ISelectionRenderer {
 
         /** 绘制内层元素的选中框 */
         const ids = getSelectionState('ids');
-        const sceneTree = getProjectState('sceneTree');
-        const nodes = sceneTree.findByIds(ids)
+        const nodes = findByIds(ids)
         for (const node of nodes) {
             const path = node.getHoverPath()
             canvas.save()
