@@ -1,6 +1,6 @@
 import { setViewportState } from "@/store/viewport";
 
-interface ViewportState {
+export interface ViewportState {
     scale: number;
     x: number;
     y: number;

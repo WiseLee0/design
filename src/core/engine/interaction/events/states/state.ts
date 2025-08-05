@@ -52,12 +52,12 @@ export interface IState {
 export abstract class BaseState implements IState {
     constructor(protected context: EventHandler) {}
 
-    enter(...args: any[]): void {}
+    enter(..._args: any[]): void {}
     exit(): void {}
-    onMouseDown(event: MouseEvent): void {}
-    onMouseMove(event: MouseEvent): void {}
-    onMouseUp(event: MouseEvent): void {}
-    onWheel(event: WheelEvent): void {}
-    onKeyDown(event: KeyboardEvent): void {}
-    onMouseLeave(event: MouseEvent): void {}
+    onMouseDown(_event: MouseEvent): void {}
+    onMouseMove(_event: MouseEvent): void {}
+    onMouseUp(_event: MouseEvent): void {}
+    onWheel(_event: WheelEvent): void {}
+    onKeyDown(_event: KeyboardEvent): void {}
+    onMouseLeave(_event: MouseEvent): void {}
 }

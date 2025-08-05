@@ -15,7 +15,6 @@ export const hitPointStrategies: Record<DesignElement['type'], (pt: vec2, node: 
     const dy = p[1] - cy;
     return dx * dx + dy * dy <= r * r;
   },
-  GROUP: () => false,
   ROOT: () => false,
 };
 
@@ -34,7 +33,5 @@ export const hitGhostStrategies: Record<DesignElement['type'], (box: BoundingBox
       b.y < box.y + box.height &&
       b.y + b.height > box.y
   },
-  GROUP: () => false,
   ROOT: () => false,
-
 }

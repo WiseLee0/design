@@ -1,4 +1,4 @@
-import type { DesignElement, SceneNode } from '@/core/models';
+import type { SceneNode } from '@/core/models';
 import type { IElementRenderer } from './base-renderer';
 import { RectangleRenderer } from './rectangle-renderer';
 import { CircleRenderer } from './circle-renderer';

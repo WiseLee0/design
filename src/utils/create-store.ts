@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import type { UseBoundStore, StoreApi } from 'zustand';
 
 export function createStoreUtils<T>(initialState: T) {
     const originStore = create<T>(() => initialState);

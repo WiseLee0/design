@@ -261,7 +261,7 @@ export class SceneNode implements IHittable {
     /** 世界变换 */
     private getAbsoluteTransform(): mat3 {
         return this.cacheManager.get('transform', () => {
-            let t = this.getLocalTransform();
+            const t = this.getLocalTransform();
             if (this._parent) {
                 const pt = this._parent.getAbsoluteTransform();
                 mat3.multiply(t, pt, t);
