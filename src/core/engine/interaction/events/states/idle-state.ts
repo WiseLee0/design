@@ -133,7 +133,10 @@ export class IdleState extends BaseState {
                 moveInfo: {
                     type: 'id',
                     value: id
-                }
+                },
+                ids: new Set([id]),
+                selectionBoxs: [],
+                hoverId: id
             })
             return true
         }
