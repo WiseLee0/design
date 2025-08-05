@@ -43,10 +43,23 @@ export class CacheManager {
   markDirty(dependency: string): void {
     this.dirtyFlags.add(dependency);
 
-    // 清除依赖此项的所有缓存
+    // 递归清除所有直接和间接依赖此项的缓存
+    this.clearDependentCaches(dependency);
+  }
+
+  /**
+   * 递归清除依赖指定属性的所有缓存
+   * @param dependency 依赖项名称
+   * @param visited 已访问的缓存键，防止循环依赖
+   */
+  private clearDependentCaches(dependency: string, visited = new Set<string>()): void {
     for (const [cacheKey, deps] of Object.entries(CACHE_DEPENDENCIES)) {
-      if (deps.includes(dependency)) {
+      if (deps.includes(dependency) && !visited.has(cacheKey)) {
         this.cache.delete(cacheKey);
+        visited.add(cacheKey);
+        
+        // 递归清除依赖当前缓存键的其他缓存
+        this.clearDependentCaches(cacheKey, visited);
       }
     }
   }
