@@ -1,12 +1,7 @@
-import { MainCanvas } from "@/components/canvas"
+import { AppRouter } from "@/router"
 
 function App() {
-
-  return (
-    <div>
-      <MainCanvas />
-    </div>
-  )
+  return <AppRouter />
 }
 
 export default App
