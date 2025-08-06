@@ -72,14 +72,6 @@ export class MovingState extends BaseState {
         this.context.transitionTo(this.context.states.idle);
     }
 
-    /**
-     * 处理鼠标离开画布，也切换回空闲状态。
-     */
-    onMouseLeave(event: MouseEvent): void {
-        event.preventDefault();
-        this.context.transitionTo(this.context.states.idle);
-    }
-
 
     private updatePosition(deltaX: number, deltaY: number) {
         const moveInfo = getSelectionState('moveInfo')

@@ -5,6 +5,7 @@ import { SelectionRendererFactory } from './selection/renderer-factory';
 import { SceneTree } from '@/core/models/scene/scene-tree';
 import { SceneNode } from '@/core/models/scene/scene-node';
 import { hitMatrixNodeTest } from '@/utils/hit-test';
+import { debounce } from '@/utils/debounce';
 
 class Renderer {
     private canvasKit!: CanvasKit;
@@ -13,6 +14,7 @@ class Renderer {
     private interactionController?: InteractionController;
     private selectionFactory = new SelectionRendererFactory();
     private sceneTree!: SceneTree;
+    private debounceResize!: () => void
 
     // 脏标记驱动渲染
     private needsRender: boolean = false;
@@ -24,25 +26,11 @@ class Renderer {
         });
         this.canvasKit = canvasKit;
 
-        const canvas = document.getElementById('main-canvas') as HTMLCanvasElement;
-        const pixelRatio = window.devicePixelRatio || 1;
-        canvas.width = innerWidth * pixelRatio;
-        canvas.height = innerHeight * pixelRatio;
-        canvas.style.width = `${innerWidth}px`;
-        canvas.style.height = `${innerHeight}px`;
-
-        const surface = canvasKit.MakeWebGLCanvasSurface(canvas, canvasKit.ColorSpace.SRGB, {
-            antialias: 1
-        });
-        if (!surface) {
-            console.error('无法创建surface');
-            return;
-        }
-        const skCanvas = surface.getCanvas();
-        skCanvas.scale(pixelRatio, pixelRatio);
-        this.surface = surface;
+        this.debounceResize = debounce(this.resize.bind(this), 100);
+        this.debounceResize()
 
         // 初始化交互控制器
+        const canvas = document.getElementById('main-canvas') as HTMLCanvasElement;
         this.interactionController = new InteractionController(canvas);
 
         // 监听视口变化，触发重新渲染
@@ -58,6 +46,8 @@ class Renderer {
             this.markNeedsRender();
         });
 
+        // 监听窗口大小变化
+        window.addEventListener('resize', this.debounceResize);
 
         // 初始标记需要渲染
         this.markNeedsRender();
@@ -65,7 +55,7 @@ class Renderer {
 
         return {
             canvasKit,
-            surface,
+            surface: this.surface,
         }
     }
 
@@ -187,12 +177,46 @@ class Renderer {
     }
 
     /**
+     * 调整画布尺寸
+     */
+    resize(): void {
+        if (!this.canvasKit) return;
+        if (this.surface) {
+            this.surface.delete();
+        }
+        const canvasKit = this.canvasKit
+        const canvas = document.getElementById('main-canvas') as HTMLCanvasElement;
+        const container = document.getElementById('canvas-contianer') as HTMLDivElement;
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        const pixelRatio = window.devicePixelRatio || 1;
+        canvas.width = width * pixelRatio;
+        canvas.height = height * pixelRatio;
+        canvas.style.width = `${width}px`;
+        canvas.style.height = `${height}px`;
+
+        const surface = canvasKit.MakeWebGLCanvasSurface(canvas, canvasKit.ColorSpace.SRGB, {
+            antialias: 1
+        });
+        if (!surface) {
+            console.error('无法创建surface');
+            return;
+        }
+        const skCanvas = surface.getCanvas();
+        skCanvas.scale(pixelRatio, pixelRatio);
+        this.surface = surface;
+
+        this.markNeedsRender();
+    }
+
+    /**
      * 销毁渲染器
      */
     destroy(): void {
         if (this.interactionController) {
             this.interactionController.destroy();
         }
+        window.removeEventListener('resize', this.debounceResize);
     }
 }
 

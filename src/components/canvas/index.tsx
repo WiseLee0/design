@@ -15,5 +15,5 @@ export const MainCanvas = () => {
         });
     }, [])
 
-    return <canvas width={innerWidth} height={innerHeight} id={'main-canvas'} />
+    return <canvas id={'main-canvas'} />
 }
