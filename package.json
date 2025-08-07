@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.11",
+    "@types/tinycolor2": "^1.4.6",
     "antd": "^5.26.7",
     "canvaskit-wasm": "^0.40.0",
     "gl-matrix": "^3.4.3",
@@ -20,6 +21,7 @@
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.7.1",
     "tailwindcss": "^4.1.11",
+    "tinycolor2": "^1.6.0",
     "uuid": "^11.1.0",
     "zustand": "^5.0.6"
   },
