@@ -1,4 +1,4 @@
-import type { SceneTree, DesignElement } from '@/core/models';
+import type { SceneTree, DesignElement, FillPaint, DesignColor } from '@/core/models';
 import { createStoreUtils } from '@/utils/create-store';
 import type { CanvasKit, Surface } from 'canvaskit-wasm';
 
@@ -48,12 +48,22 @@ const mockElements: DesignElement[] = [
 
 interface ProjectState {
     mockElements: DesignElement[]
+    page: {
+        fillPaint: FillPaint
+    }
     sceneTree: SceneTree
     CK: CanvasKit
     surface: Surface
 }
 const _projectState = {
     mockElements,
+    page: {
+        fillPaint: {
+            color: [0.9529411764705882, 0.9568627450980393, 0.9568627450980393, 1], // #F3F4F4
+            visible: true,
+            blendMode: "NORMAL"
+        } as FillPaint
+    },
     sceneTree: null!,
     CK: null!,
     surface: null!,

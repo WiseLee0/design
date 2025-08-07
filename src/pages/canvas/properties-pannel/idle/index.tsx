@@ -1,6 +1,7 @@
 import { useViewportState } from "@/store/viewport"
 import DropDownSvg from '@/assets/drop-down.svg?react'
-import EyeIcon from '@/assets/eye.svg?react'
+import { FillPaintPannel } from "@/components/fillpaint-pannel"
+import { getProjectState } from "@/store/project"
 
 export const IdlePannel = () => {
     return <div>
@@ -14,16 +15,12 @@ export const IdlePannel = () => {
 }
 
 const PageColorControl = () => {
+    const page = getProjectState('page')
     return (
-        <div className="px-4 pb-2 flex items-center">
-            <div className="flex-1 flex items-center bg-gray-100 rounded h-7 px-2 text-xs">
-                <div className="w-4 h-4 bg-[#F3F4F4] border border-gray-300 rounded-sm"></div>
-                <span className="ml-2 flex-1 text-color">F3F4F4</span>
-                <div className="border-l border-gray-200 h-4 mx-2"></div>
-                <span className="w-10 text-right text-color">100</span>
-                <span className="text-color mx-1">%</span>
-            </div>
-            <EyeIcon className="ml-1" />
+        <div className="px-4 pb-2">
+            <FillPaintPannel fillPaint={page.fillPaint} onChange={() => {
+
+            }} visibleIcon={true} />
         </div>
     )
 }

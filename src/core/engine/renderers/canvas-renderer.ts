@@ -6,6 +6,7 @@ import { SceneTree } from '@/core/models/scene/scene-tree';
 import { SceneNode } from '@/core/models/scene/scene-node';
 import { hitMatrixNodeTest } from '@/utils/hit-test';
 import { debounce } from '@/utils/debounce';
+import { getProjectState } from '@/store/project';
 
 class Renderer {
     private canvasKit!: CanvasKit;
@@ -82,7 +83,8 @@ class Renderer {
         const canvas = this.surface.getCanvas();
 
         // 清空画布
-        canvas.clear([0.9529, 0.9568, 0.9568, 1]);
+        const pageStore = getProjectState('page');
+        canvas.clear(pageStore.fillPaint.color);
 
         // 保存当前变换状态
         canvas.save();
