@@ -1,4 +1,5 @@
-import EyeIcon from "@/assets/eye.svg?react";
+import OpenEyeIcon from "@/assets/open-eye.svg?react";
+import CloseEyeIcon from "@/assets/close-eye.svg?react";
 import type { FillPaint } from "@/core/models";
 import { floatRgbaToHex } from "@/utils/color";
 import { ColorPicker } from "antd";
@@ -9,9 +10,10 @@ interface FillPaintPannelProps {
   fillPaint: FillPaint;
   visibleIcon?: boolean;
   onChange?: (color: FillPaint["color"]) => void;
+  onVisibleChange?: (visible: boolean) => void;
 }
 export const FillPaintPannel = (props: FillPaintPannelProps) => {
-  const { fillPaint, visibleIcon = true, onChange } = props;
+  const { fillPaint, visibleIcon = true, onChange, onVisibleChange } = props;
   const hexValue = floatRgbaToHex(
     fillPaint.color[0],
     fillPaint.color[1],
@@ -22,6 +24,7 @@ export const FillPaintPannel = (props: FillPaintPannelProps) => {
   const opacityValue = Math.round(fillPaint.color[3] * 100).toString();
   const [color, setColor] = useState(hexValue);
   const [opacity, setOpacity] = useState(opacityValue);
+  const [visible, setVisible] = useState(fillPaint.visible);
   // Combined hex8 string for the color picker component
   const hex = tinycolor(color)
     .setAlpha(parseFloat(opacity) / 100)
@@ -73,9 +76,7 @@ export const FillPaintPannel = (props: FillPaintPannelProps) => {
     if (newColorHex.length === 8) {
       const colorPart = newColorHex.slice(0, -2);
       const alphaPart = newColorHex.slice(-2);
-      const newOpacity = Math.round(
-        (parseInt(alphaPart, 16) / 255) * 100
-      );
+      const newOpacity = Math.round((parseInt(alphaPart, 16) / 255) * 100);
       const newOpacityStr = newOpacity.toString();
       setOpacity(newOpacityStr);
       setColor(colorPart);
@@ -127,15 +128,19 @@ export const FillPaintPannel = (props: FillPaintPannelProps) => {
     setOpacity(opacityValue);
   }, [hexValue, opacityValue]);
 
+  useEffect(() => {
+    setVisible(fillPaint.visible);
+  }, [fillPaint.visible]);
+
   return (
     <div className="flex items-center">
-      <div className="flex-1 flex items-center justify-between bg-[#f5f5f5] border border-[#f5f5f5] rounded-[6px] h-7 text-xs not-focus-within:hover:border-[#e6e6e6] focus-within:border-[#0d99ff]">
+      <div className="h-6 flex-1 flex items-center justify-between bg-[#f5f5f5] border border-[#f5f5f5] rounded-[6px] text-xs not-focus-within:hover:border-[#e6e6e6] focus-within:border-[#0d99ff]">
         <div className="flex items-center">
           <ColorPicker
             value={hex}
             size="small"
             className="mx-[4px]"
-            style={{ transform: "scale(0.8)" }}
+            style={{ transform: "scale(0.6)" }}
             onChange={handleColorPickerChange}
           />
           <div className="w-[80px]">
@@ -152,7 +157,7 @@ export const FillPaintPannel = (props: FillPaintPannelProps) => {
               onBlur={() => handleColorChange()}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
-                  handleColorChange();
+                  (e.target as HTMLInputElement)?.blur?.();
                 }
               }}
             />
@@ -173,15 +178,26 @@ export const FillPaintPannel = (props: FillPaintPannelProps) => {
             onBlur={handleOpacityChange}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
-                handleOpacityChange();
+                (e.target as HTMLInputElement)?.blur?.();
               }
             }}
           />
           <span className="text-color mx-1">%</span>
         </div>
       </div>
-      <div className="w-[24px] flex-shrink-0 flex items-center justify-center ml-1">
-        {visibleIcon && <EyeIcon />}
+      <div
+        className="w-[24px] flex-shrink-0 flex items-center justify-center ml-1 rounded-[6px] hover:bg-[#f5f5f5]"
+        onClick={() => {
+          setVisible(!visible);
+          onVisibleChange?.(!visible);
+        }}
+      >
+        {visibleIcon && (
+          <>
+            {visible && <OpenEyeIcon />}
+            {!visible && <CloseEyeIcon />}
+          </>
+        )}
       </div>
     </div>
   );

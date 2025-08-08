@@ -88,7 +88,11 @@ class Renderer {
 
     // 清空画布
     const fillPaint = getPageState("fillPaint");
-    canvas.clear(fillPaint.color);
+    if (!fillPaint.visible) {
+      canvas.clear(this.canvasKit.TRANSPARENT);
+    } else {
+      canvas.clear(fillPaint.color);
+    }
 
     // 保存当前变换状态
     canvas.save();

@@ -1,7 +1,7 @@
 import { useViewportState } from "@/store/viewport";
 import DropDownSvg from "@/assets/drop-down.svg?react";
 import { FillPaintPannel } from "@/components/fillpaint-pannel";
-import { getPageState, setPageState } from "@/store/page";
+import { getPageState, setPageState, usePageState } from "@/store/page";
 
 export const IdlePannel = () => {
   return (
@@ -19,7 +19,7 @@ export const IdlePannel = () => {
 };
 
 const PageColorControl = () => {
-  const pageFillPaint = getPageState("fillPaint");
+  const pageFillPaint = usePageState("fillPaint");
   return (
     <div className="px-4 pb-2">
       <FillPaintPannel
@@ -29,10 +29,18 @@ const PageColorControl = () => {
             fillPaint: {
               ...pageFillPaint,
               color: color,
+              visible: true,
             },
           });
         }}
-        visibleIcon={false}
+        onVisibleChange={(visible) => {
+          setPageState({
+            fillPaint: {
+              ...pageFillPaint,
+              visible,
+            },
+          });
+        }}
       />
     </div>
   );
