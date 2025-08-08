@@ -1,6 +1,7 @@
 import EyeIcon from "@/assets/eye.svg?react";
 import type { FillPaint } from "@/core/models";
 import { floatRgbaToHex } from "@/utils/color";
+import { ColorPicker } from "antd";
 import { useEffect, useState } from "react";
 import tinycolor from "tinycolor2";
 
@@ -17,44 +18,87 @@ export const FillPaintPannel = (props: FillPaintPannelProps) => {
     fillPaint.color[2],
     1
   );
-  const opcityValue = Math.round(fillPaint.color[3] * 100).toString();
+  // Extract opacity value and convert to percentage string
+  const opacityValue = Math.round(fillPaint.color[3] * 100).toString();
   const [color, setColor] = useState(hexValue);
-  const [opcity, setOpcity] = useState(opcityValue);
+  const [opacity, setOpacity] = useState(opacityValue);
+  // Combined hex8 string for the color picker component
+  const hex = tinycolor(color)
+    .setAlpha(parseFloat(opacity) / 100)
+    .toHex8String();
 
-  const handleColorChange = () => {
-    const value = tinycolor(color).toHex8String();
-    if (value === "#000000ff" && !/^0+$/.test(color)) {
+  /**
+   * Handles changes from the color input or color picker.
+   * Updates the color and opacity, and calls the parent onChange callback.
+   * @param colorVal - The new color value (hex).
+   * @param opacityVal - The new opacity value (string percentage).
+   */
+  const handleColorChange = (colorVal = color, opacityVal = opacity) => {
+    const value = tinycolor(colorVal).toHex8String();
+    // Handles a specific edge case for tinycolor library where black might be misinterpreted.
+    if (value === "#000000ff" && !/^0+$/.test(colorVal)) {
       setColor(hexValue.toUpperCase());
       return;
     }
     const alpha = value.slice(-2);
+    // If the color hex string includes alpha, update opacity from it.
     if (alpha != "ff") {
       const newColor = value.slice(1, 7).toUpperCase();
       setColor(newColor);
-      const newOpcity = Math.round((parseInt(alpha, 16) / 255) * 10000) / 100;
-      setOpcity(newOpcity.toString());
+      const newOpacity = Math.round((parseInt(alpha, 16) / 255) * 100);
+      setOpacity(newOpacity.toString());
       const result = tinycolor(newColor)
-        .setAlpha(newOpcity / 100)
+        .setAlpha(newOpacity / 100)
         .toRgb();
       onChange?.([result.r / 255, result.g / 255, result.b / 255, result.a]);
       return;
     }
+    // If no alpha in color hex, use the existing opacity state.
     const newColor = value.slice(1, 7).toUpperCase();
     setColor(newColor);
     const result = tinycolor(newColor)
-      .setAlpha(parseFloat(opcity) / 100)
+      .setAlpha(parseFloat(opacityVal) / 100)
       .toRgb();
     onChange?.([result.r / 255, result.g / 255, result.b / 255, result.a]);
     return;
   };
 
-  const handleOpcityChange = () => {
-    if (!/^\d+$/.test(opcity)) {
-      setOpcity(opcityValue);
+  /**
+   * Handles color selection from the Ant Design ColorPicker.
+   * @param color The Color object from the picker, using 'any' to avoid import complexities.
+   */
+  const handleColorPickerChange = (color: any) => {
+    const newColorHex = color.toHex().toUpperCase();
+    // When the picker includes an alpha channel in its selection
+    if (newColorHex.length === 8) {
+      const colorPart = newColorHex.slice(0, -2);
+      const alphaPart = newColorHex.slice(-2);
+      const newOpacity = Math.round(
+        (parseInt(alphaPart, 16) / 255) * 100
+      );
+      const newOpacityStr = newOpacity.toString();
+      setOpacity(newOpacityStr);
+      setColor(colorPart);
+      handleColorChange(colorPart, newOpacityStr);
       return;
     }
-    if (parseFloat(opcity) > 100) {
-      setOpcity("100");
+    // When the picker returns a standard 6-digit hex
+    setColor(newColorHex);
+    handleColorChange(newColorHex);
+  };
+
+  /**
+   * Validates and applies the opacity value from the input field on blur or Enter.
+   */
+  const handleOpacityChange = () => {
+    // Revert to original opacity if input is not a number.
+    if (!/^\d+$/.test(opacity)) {
+      setOpacity(opacityValue);
+      return;
+    }
+    // Clamp opacity between 0 and 100.
+    if (parseFloat(opacity) > 100) {
+      setOpacity("100");
       onChange?.([
         fillPaint.color[0],
         fillPaint.color[1],
@@ -63,8 +107,8 @@ export const FillPaintPannel = (props: FillPaintPannelProps) => {
       ]);
       return;
     }
-    if (parseFloat(opcity) < 0) {
-      setOpcity("0");
+    if (parseFloat(opacity) < 0) {
+      setOpacity("0");
       onChange?.([
         fillPaint.color[0],
         fillPaint.color[1],
@@ -73,22 +117,27 @@ export const FillPaintPannel = (props: FillPaintPannelProps) => {
       ]);
       return;
     }
+    // Apply the change.
     handleColorChange();
   };
 
+  // Update internal state when the parent component's fillPaint prop changes.
   useEffect(() => {
     setColor(hexValue);
-  }, [hexValue]);
-
-  useEffect(() => {
-    setOpcity(opcityValue);
-  }, [opcityValue]);
+    setOpacity(opacityValue);
+  }, [hexValue, opacityValue]);
 
   return (
     <div className="flex items-center">
       <div className="flex-1 flex items-center justify-between bg-[#f5f5f5] border border-[#f5f5f5] rounded-[6px] h-7 text-xs not-focus-within:hover:border-[#e6e6e6] focus-within:border-[#0d99ff]">
         <div className="flex items-center">
-          <div className="w-4 h-4 bg-[#F3F4F4] border border-gray-300 rounded-sm mx-[5px]"></div>
+          <ColorPicker
+            value={hex}
+            size="small"
+            className="mx-[4px]"
+            style={{ transform: "scale(0.8)" }}
+            onChange={handleColorPickerChange}
+          />
           <div className="w-[80px]">
             <input
               name="fillpaint-pannel"
@@ -100,7 +149,7 @@ export const FillPaintPannel = (props: FillPaintPannelProps) => {
               onChange={(e) => {
                 setColor(e.target.value);
               }}
-              onBlur={handleColorChange}
+              onBlur={() => handleColorChange()}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   handleColorChange();
@@ -117,14 +166,14 @@ export const FillPaintPannel = (props: FillPaintPannelProps) => {
             spellCheck={false}
             dir="auto"
             className="w-[40px] pl-[7px] border-0 focus:outline-none text-[11px]"
-            value={opcity}
+            value={opacity}
             onChange={(e) => {
-              setOpcity(e.target.value);
+              setOpacity(e.target.value);
             }}
-            onBlur={handleOpcityChange}
+            onBlur={handleOpacityChange}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
-                handleOpcityChange();
+                handleOpacityChange();
               }
             }}
           />
