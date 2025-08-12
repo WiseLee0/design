@@ -10,7 +10,7 @@ interface BenchmarkGenerateContainerProps {
 export const BenchmarkGenerateContainer = (
   props: BenchmarkGenerateContainerProps
 ) => {
-  const [value, setValue] = useState(props.defaultValue || 50);
+  const [value, setValue] = useState(props.defaultValue || 200);
   return (
     <div className="px-2">
       <div className="text-sm text-[#2f3131] mb-2">

@@ -1,5 +1,6 @@
 import type { CanvasKit, Canvas, Paint } from 'canvaskit-wasm';
 import type { FillPaint, SceneNode } from '@/core/models';
+import { createPaint } from '../cache/create-paint';
 
 /**
  * 元素渲染器接口
@@ -35,9 +36,8 @@ export abstract class BaseRenderer implements IElementRenderer {
         // 处理填充样式
         node.fillPaints.forEach(fillPaint => {
             if (fillPaint.visible) {
-                const paint = this.createPaint(canvasKit, fillPaint);
+                const paint = createPaint(canvasKit, fillPaint);
                 this.renderShape(canvasKit, canvas, node, paint);
-                paint.delete();
             }
         });
 
@@ -57,29 +57,6 @@ export abstract class BaseRenderer implements IElementRenderer {
                 b, d, f,
                 0, 0, 1
             ]);
-        }
-    }
-
-    /**
-     * 创建画笔并应用样式
-     */
-    protected createPaint(canvasKit: CanvasKit, fillPaint: FillPaint): Paint {
-        const paint = new canvasKit.Paint();
-        paint.setColor([fillPaint.color[0], fillPaint.color[1], fillPaint.color[2], fillPaint.color[3]]);
-        this.applyBlendMode(canvasKit, paint, fillPaint.blendMode);
-        return paint;
-    }
-
-    /**
-     * 应用混合模式
-     */
-    protected applyBlendMode(canvasKit: CanvasKit, paint: Paint, blendMode: string): void {
-        switch (blendMode) {
-            case 'NORMAL':
-                paint.setBlendMode(canvasKit.BlendMode.SrcOver);
-                break;
-            default:
-                paint.setBlendMode(canvasKit.BlendMode.SrcOver);
         }
     }
 }
