@@ -6,7 +6,7 @@ export function CanvasPage() {
       <div id="canvas-contianer" className="flex flex-1 h-screen min-w-0">
         <MainCanvas />
       </div>
-      <div className="w-[240px] h-screen bg-white">
+      <div className="w-[240px] h-screen bg-white border-l border-gray-200">
         <PropertiesPannel />
       </div>
     </div>

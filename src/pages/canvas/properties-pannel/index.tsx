@@ -1,6 +1,6 @@
 import { IdlePannel } from "./idle"
 export const PropertiesPannel = () => {
-    return <div className="border-l border-gray-200 h-screen">
+    return <div className="w-full h-full">
         <IdlePannel />
     </div>
 }
