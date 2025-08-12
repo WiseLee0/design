@@ -35,7 +35,7 @@ export abstract class BaseRenderer implements IElementRenderer {
         // 处理填充样式
         node.fillPaints.forEach(fillPaint => {
             if (fillPaint.visible) {
-                const paint = this.createPaint(canvasKit, fillPaint, node.opacity);
+                const paint = this.createPaint(canvasKit, fillPaint);
                 this.renderShape(canvasKit, canvas, node, paint);
                 paint.delete();
             }
@@ -63,9 +63,9 @@ export abstract class BaseRenderer implements IElementRenderer {
     /**
      * 创建画笔并应用样式
      */
-    protected createPaint(canvasKit: CanvasKit, fillPaint: FillPaint, opacity: number): Paint {
+    protected createPaint(canvasKit: CanvasKit, fillPaint: FillPaint): Paint {
         const paint = new canvasKit.Paint();
-        paint.setColor([fillPaint.color[0], fillPaint.color[1], fillPaint.color[2], fillPaint.color[3] * opacity]);
+        paint.setColor([fillPaint.color[0], fillPaint.color[1], fillPaint.color[2], fillPaint.color[3]]);
         this.applyBlendMode(canvasKit, paint, fillPaint.blendMode);
         return paint;
     }

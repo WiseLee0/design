@@ -6,7 +6,6 @@ export interface DesignElement {
   height: number;
   fillPaints: FillPaint[];
   visible: boolean;
-  opacity: number;
   children?: DesignElement[];
 }
 

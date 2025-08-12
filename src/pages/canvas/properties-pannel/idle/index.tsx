@@ -1,7 +1,7 @@
 import { useViewportState } from "@/store/viewport";
 import DropDownSvg from "@/assets/drop-down.svg?react";
 import { FillPaintPannel } from "@/components/fillpaint-pannel";
-import { getPageState, setPageState, usePageState } from "@/store/page";
+import {setPageState, usePageState } from "@/store/page";
 
 export const IdlePannel = () => {
   return (

@@ -1,4 +1,4 @@
-import type { SceneTree, DesignElement, FillPaint } from "@/core/models";
+import type { SceneTree, DesignElement } from "@/core/models";
 import { createStoreUtils } from "@/utils/create-store";
 import type { CanvasKit, Surface } from "canvaskit-wasm";
 
@@ -11,7 +11,6 @@ const mockElements: DesignElement[] = [
     width: 100,
     height: 100,
     visible: true,
-    opacity: 1,
     fillPaints: [
       {
         color: [1, 0, 0, 1],
@@ -27,7 +26,6 @@ const mockElements: DesignElement[] = [
     width: 80,
     height: 80,
     visible: true,
-    opacity: 1,
     fillPaints: [
       {
         color: [0, 1, 0, 1],
@@ -46,10 +44,9 @@ const mockElements: DesignElement[] = [
     width: 80,
     height: 180,
     visible: true,
-    opacity: 0.8,
     fillPaints: [
       {
-        color: [1, 0, 1, 1],
+        color: [1, 0, 1, 0.8],
         visible: true,
         blendMode: "NORMAL",
       },

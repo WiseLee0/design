@@ -26,7 +26,6 @@ export class SceneNode implements IHittable {
     private _width: DesignElement['width'];
     private _height: DesignElement['height'];
     private _visible: DesignElement['visible'];
-    private _opacity: DesignElement['opacity'];
     private _fillPaints: FillPaint[];
 
     // 原始 DesignElement
@@ -45,7 +44,6 @@ export class SceneNode implements IHittable {
         this._width = element.width;
         this._height = element.height;
         this._visible = element.visible;
-        this._opacity = element.opacity;
         this._fillPaints = [...element.fillPaints];
         this._element = element;
         // 初始化时标记相关依赖为脏，确保首次计算正确
@@ -114,15 +112,6 @@ export class SceneNode implements IHittable {
     }
     set visible(v: boolean) {
         this._visible = v;
-        this.notifySceneTree();
-    }
-
-    // ----- opacity -----
-    get opacity(): number {
-        return this._opacity;
-    }
-    set opacity(o: number) {
-        this._opacity = o;
         this.notifySceneTree();
     }
 
@@ -211,7 +200,6 @@ export class SceneNode implements IHittable {
             width: this._width,
             height: this._height,
             visible: this._visible,
-            opacity: this._opacity,
             fillPaints: this._fillPaints,
         });
     }

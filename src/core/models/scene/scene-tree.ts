@@ -23,7 +23,6 @@ export class SceneTree {
             height: 0,
             fillPaints: [],
             visible: true,
-            opacity: 1,
             children: [],
         };
         this.root = new SceneNode(rootEl);
