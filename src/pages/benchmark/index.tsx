@@ -1,7 +1,7 @@
 import { MainCanvas } from "@/components/canvas";
 import { ZoomMenuContainer } from "@/components/zoom-menu";
 import { BenchmarkGenerateContainer } from "./components/generate-container";
-import { benchmarkGenerateElements } from "./generate/element";
+import { benchmarkGenerateElements, benchmarkGenerateRndElements } from "./generate/element";
 
 export const BenchmarkPage = () => {
 
@@ -14,7 +14,9 @@ export const BenchmarkPage = () => {
         <div className="flex h-[40px] justify-end items-center px-2">
           <ZoomMenuContainer />
         </div>
-        <BenchmarkGenerateContainer onSubmit={benchmarkGenerateElements} />
+        <BenchmarkGenerateContainer title="矩形数量" defaultValue={50000} onSubmit={benchmarkGenerateElements} />
+        <div className="border-b border-gray-100 my-4"></div>
+        <BenchmarkGenerateContainer defaultValue={5000} onSubmit={benchmarkGenerateRndElements} />
       </div>
     </div>
   );

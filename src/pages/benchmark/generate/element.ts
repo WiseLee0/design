@@ -12,7 +12,7 @@ const PRESET_COLORS: [number, number, number, number][] = [
   [0.75, 0.47, 0.53, 0.65],
 ];
 
-export const benchmarkGenerateElements = (count: number) => {
+export const benchmarkGenerateRndElements = (count: number) => {
   const sceneTree = getProjectState("sceneTree");
 
   const rnd = (min: number, max: number) =>
@@ -54,3 +54,50 @@ export const benchmarkGenerateElements = (count: number) => {
   setProjectState({ mockElements: generated });
   sceneTree?.build(generated);
 };
+
+export const benchmarkGenerateElements = (count: number) => {
+  const sceneTree = getProjectState("sceneTree");
+
+  const generated: DesignElement[] = generateElements(100, 100, count)
+
+  setProjectState({ mockElements: generated });
+  sceneTree?.build(generated);
+};
+
+
+function generateElements(elementWidth: number, elementHeight: number, count: number) {
+  const elements: DesignElement[] = [];
+  const itemSize = elementWidth;
+  const gap = 10;
+  const itemWithGap = itemSize + gap;
+  const containerWidth = Math.sqrt(count) * (itemSize + gap);
+  const cols = Math.floor(containerWidth / itemWithGap);
+  const actualCols = Math.max(1, cols); // 确保至少有一列
+
+  for (let i = 0; i < count; i++) {
+    const row = Math.floor(i / actualCols);
+    const col = i % actualCols;
+    const color =
+      PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)];
+    const x = col * itemWithGap;
+    const y = row * itemWithGap;
+
+    elements.push({
+      id: i.toString(),
+      type: 'RECTANGLE',
+      matrix: [1, 0, 0, 1, x, y],
+      width: elementWidth,
+      height: elementHeight,
+      visible: true,
+      fillPaints: [
+        {
+          color,
+          visible: true,
+          blendMode: "NORMAL",
+        },
+      ],
+    });
+  }
+
+  return elements;
+}
