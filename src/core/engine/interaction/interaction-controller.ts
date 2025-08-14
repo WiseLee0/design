@@ -1,5 +1,6 @@
 import { ViewportManager } from './viewport';
 import { EventHandler } from './events/event-handler';
+import { getViewportState } from '@/store/viewport';
 
 /**
  * 交互控制器
@@ -20,7 +21,7 @@ export class InteractionController {
      * 获取缩放值
      */
     get scale() {
-        return this.viewportManager.getState().scale
+        return getViewportState('scale');
     }
 
     /**
@@ -35,13 +36,6 @@ export class InteractionController {
      */
     getEventHandler(): EventHandler {
         return this.eventHandler;
-    }
-
-    /**
-     * 获取当前视口状态
-     */
-    getViewportState() {
-        return this.viewportManager.getState();
     }
 
     /**

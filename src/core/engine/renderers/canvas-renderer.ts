@@ -11,6 +11,7 @@ import { SceneNode } from "@/core/models/scene/scene-node";
 import { hitMatrixNodeTest } from "@/utils/hit-test";
 import { debounce } from "@/utils/debounce";
 import { getPageState } from "@/store/page";
+import { getViewportState } from "@/store/viewport";
 
 class Renderer {
   private canvasKit!: CanvasKit;
@@ -32,11 +33,12 @@ class Renderer {
     this.canvasKit = canvasKit;
 
     this.debounceResize = debounce(this.resize.bind(this), 100);
-    this.debounceResize();
+    this.resize();
 
     // 初始化交互控制器
     const canvas = document.getElementById("main-canvas") as HTMLCanvasElement;
     this.interactionController = new InteractionController(canvas);
+    this.interactionController.resetViewport();
 
     // 监听视口变化，触发重新渲染
     this.interactionController.onViewportChange(() => {
@@ -98,21 +100,12 @@ class Renderer {
     canvas.save();
 
     // 应用视口变换
-    if (this.interactionController) {
-      const viewportState = this.interactionController.getViewportState();
-      const transform = viewportState.transformMatrix;
-      canvas.concat([
-        transform[0],
-        transform[1],
-        transform[4],
-        transform[2],
-        transform[3],
-        transform[5],
-        0,
-        0,
-        1,
-      ]);
-    }
+    const transform = getViewportState('transformMatrix');
+    canvas.concat([
+      transform[0], transform[1], transform[4],
+      transform[2], transform[3], transform[5],
+      0, 0, 1,
+    ]);
 
     // 渲染场景树
     this.renderNode(canvas, this.sceneTree.root);
@@ -140,13 +133,15 @@ class Renderer {
    * 递归渲染单个节点及其子节点
    */
   private renderNode(canvas: Canvas, node: SceneNode): void {
-    if (!node.visible) return;
     // 视口剔除
     if (this.shouldViewportCulling(node)) return;
+    // 不可见剔除
+    if (!node.visible) return;
     const renderer = this.elementFactory.getRenderer(node);
     if (renderer) {
       renderer.render(this.canvasKit, canvas, node);
     }
+    if(node.children.length === 0) return;
     for (const child of node.children) {
       this.renderNode(canvas, child);
     }
@@ -157,7 +152,7 @@ class Renderer {
    */
   shouldViewportCulling(node: SceneNode) {
     if (node.type === "ROOT") return false;
-    const viewport = this.interactionController!.getViewportState();
+    const viewport = getViewportState();
     const renderBox = node.getRenderBox();
     // 都转换成世界坐标进行测试
     return !hitMatrixNodeTest(

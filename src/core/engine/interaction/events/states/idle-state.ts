@@ -6,6 +6,7 @@ import { CollisionDetector, type Point } from '@/core/engine/collision';
 import { getProjectState } from '@/store/project';
 import { getSelectionState, setSelectionState } from '@/store/selection';
 import { hitMatrixNodeTest } from '@/utils/hit-test';
+import { getViewportState } from '@/store/viewport';
 
 /**
  * 空闲状态 - 默认状态，处理非特定操作（如平移、选择）之外的通用交互。
@@ -96,7 +97,7 @@ export class IdleState extends BaseState {
             const rect = canvas.getBoundingClientRect();
             const centerX = rect.width / 2;
             const centerY = rect.height / 2;
-            const { scale } = viewportManager.getState();
+            const scale = getViewportState('scale');
             viewportManager.zoom(matchZoomScale(scale, true), centerX, centerY);
         }
 
@@ -105,7 +106,7 @@ export class IdleState extends BaseState {
             const rect = canvas.getBoundingClientRect();
             const centerX = rect.width / 2;
             const centerY = rect.height / 2;
-            const { scale } = viewportManager.getState();
+            const scale = getViewportState('scale');
             viewportManager.zoom(matchZoomScale(scale, false), centerX, centerY);
         }
     }

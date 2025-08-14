@@ -6,13 +6,15 @@ interface ViewportInterface {
     y: number
     width: number
     height: number
+    transformMatrix: number[]
 }
 const _viewport: ViewportInterface = {
     scale: 1,
     x: 0,
     y: 0,
     width: 0,
-    height: 0
+    height: 0,
+    transformMatrix: [1, 0, 0, 1, 0, 0]
 }
 
 export const {

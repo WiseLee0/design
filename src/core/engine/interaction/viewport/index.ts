@@ -239,7 +239,8 @@ export class ViewportManager {
             x: state.x,
             y: state.y,
             width: state.width,
-            height: state.height
+            height: state.height,
+            transformMatrix: state.transformMatrix
         })
         this.listeners.forEach(listener => listener(state));
     }
