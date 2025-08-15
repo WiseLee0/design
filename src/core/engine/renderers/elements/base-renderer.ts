@@ -1,5 +1,5 @@
 import type { CanvasKit, Canvas, Paint } from 'canvaskit-wasm';
-import type { FillPaint, SceneNode } from '@/core/models';
+import type { SceneNode } from '@/core/models';
 import { createPaint } from '../cache/create-paint';
 
 /**

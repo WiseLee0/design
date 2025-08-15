@@ -1,4 +1,4 @@
-import { setSelectionState } from '@/store/selection';
+import { getSelectionState, setSelectionState } from '@/store/selection';
 import type { EventHandler } from '../event-handler';
 import { BaseState } from './state';
 import { markRenderDirty } from '@/core/engine/renderers';
@@ -121,13 +121,15 @@ export class SelectingState extends BaseState {
             width: box[2],
             height: box[3]
         }
-        
+
         // 先过滤掉视口外的节点，减少碰撞检测的计算量
         const visibleNodes = ViewportCulling.getVisibleNodes();
         const nodes = CollisionDetector.findIntersecting(boundingBox, visibleNodes);
-        
+        const ids = getSelectionState('ids')
+        ids.clear();
+        nodes.forEach(item => ids.add(item.id))
         setSelectionState({
-            ids: new Set(nodes.map(item => item.id))
+            ids
         })
     }
 }

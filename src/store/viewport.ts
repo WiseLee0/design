@@ -6,7 +6,7 @@ interface ViewportInterface {
     y: number
     width: number
     height: number
-    transformMatrix: number[]
+    transformMatrix: Float32Array
 }
 const _viewport: ViewportInterface = {
     scale: 1,
@@ -14,7 +14,7 @@ const _viewport: ViewportInterface = {
     y: 0,
     width: 0,
     height: 0,
-    transformMatrix: [1, 0, 0, 1, 0, 0]
+    transformMatrix: new Float32Array([1, 0, 0, 1, 0, 0, 0, 0, 1])
 }
 
 export const {

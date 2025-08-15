@@ -14,7 +14,7 @@ export class SelectionRendererFactory {
         new SelectionRenderer(),
     ];
 
-    execture(CK: CanvasKit, canvas: Canvas): void {
+    execute(CK: CanvasKit, canvas: Canvas): void {
         this.renderers.forEach(renderer => {
             if (renderer.canRender()) {
                 renderer.render(CK, canvas)

@@ -6,7 +6,6 @@ export interface ViewportState {
     y: number;
     width: number;
     height: number;
-    transformMatrix: number[];
 }
 
 export class ViewportManager {
@@ -150,14 +149,6 @@ export class ViewportManager {
 
         this.notifyStateChange();
     }
-
-    /**
-     * 获取变换矩阵
-     */
-    getTransformMatrix(): number[] {
-        return [this.scale, 0, 0, this.scale, this.offsetX, this.offsetY];
-    }
-
     /**
      * 获取当前视口状态
      */
@@ -168,7 +159,6 @@ export class ViewportManager {
             y: -this.offsetY / this.scale,  // 视口左上角的世界坐标
             width: (this.canvas.width / devicePixelRatio) / this.scale,
             height: (this.canvas.height / devicePixelRatio) / this.scale,
-            transformMatrix: this.getTransformMatrix()
         };
     }
 
@@ -240,7 +230,7 @@ export class ViewportManager {
             y: state.y,
             width: state.width,
             height: state.height,
-            transformMatrix: state.transformMatrix
+            transformMatrix: new Float32Array([this.scale, 0, this.offsetX, 0, this.scale, this.offsetY, 0, 0, 1])
         })
         this.listeners.forEach(listener => listener(state));
     }

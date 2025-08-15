@@ -101,17 +101,7 @@ class Renderer {
 
     // 应用视口变换
     const transform = getViewportState("transformMatrix");
-    canvas.concat([
-      transform[0],
-      transform[1],
-      transform[4],
-      transform[2],
-      transform[3],
-      transform[5],
-      0,
-      0,
-      1,
-    ]);
+    canvas.concat(transform);
 
     // 渲染场景树
     this.renderNode(canvas, this.sceneTree.root);
@@ -132,7 +122,7 @@ class Renderer {
    * 渲染选择框
    */
   private renderSelection() {
-    this.selectionFactory.execture(this.canvasKit, this.surface.getCanvas());
+    this.selectionFactory.execute(this.canvasKit, this.surface.getCanvas());
   }
 
   /**
@@ -220,6 +210,7 @@ class Renderer {
     if (this.interactionController) {
       this.interactionController.destroy();
     }
+    this.surface?.delete();
     window.removeEventListener("resize", this.debounceResize);
   }
 }
