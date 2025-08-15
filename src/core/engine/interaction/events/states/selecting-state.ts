@@ -68,6 +68,9 @@ export class SelectingState extends BaseState {
         markRenderDirty()
     }
 
+    /**
+     * 判断是否接近边界或者超越边界
+     */
     private _nearOrBeyondBoundary(rect: DOMRect) {
         const scale = getViewportState('scale');
         const run = () => {
@@ -128,8 +131,6 @@ export class SelectingState extends BaseState {
         const ids = getSelectionState('ids')
         ids.clear();
         nodes.forEach(item => ids.add(item.id))
-        setSelectionState({
-            ids
-        })
+        setSelectionState({ ids })
     }
 }

@@ -1,7 +1,8 @@
 import type { EventHandler } from '../event-handler';
 import { BaseState } from './state';
 import { getSelectionState, setSelectionState, updateSelectionBoxs } from '@/store/selection';
-import { findById, getRootNode } from '@/store/project';
+import { findById, getProjectState, getRootNode } from '@/store/project';
+import { CollisionDetector } from '@/core/engine/collision';
 
 /**
  * 移动状态 - 当用户选中一个元素并拖动时进入此状态。
@@ -10,6 +11,7 @@ export class MovingState extends BaseState {
     // 上一次鼠标在世界坐标系中的位置
     private lastWorldX = 0;
     private lastWorldY = 0;
+    private isMoveTriggered = false;
 
     constructor(context: EventHandler) {
         super(context);
@@ -30,6 +32,7 @@ export class MovingState extends BaseState {
         const initialWorldCoords = this.context.getWorldCoordinates(initialEvent.clientX, initialEvent.clientY);
         this.lastWorldX = initialWorldCoords.x;
         this.lastWorldY = initialWorldCoords.y;
+        this.isMoveTriggered = false;
     }
 
     /**
@@ -52,6 +55,14 @@ export class MovingState extends BaseState {
         const deltaX = currentWorldCoords.x - this.lastWorldX;
         const deltaY = currentWorldCoords.y - this.lastWorldY;
 
+        // 判断是否触发移动
+        if (Math.abs(deltaX) >= 2 || Math.abs(deltaY) >= 2) {
+            this.isMoveTriggered = true;
+        }
+
+        // 如果未触发移动，不更新节点位置
+        if (!this.isMoveTriggered) return;
+
         // 更新选框 | 节点位置
         this.updatePosition(deltaX, deltaY);
 
@@ -65,6 +76,19 @@ export class MovingState extends BaseState {
      */
     onMouseUp(event: MouseEvent): void {
         event.preventDefault();
+        // 如果未触发移动，更新节点选中
+        if (!this.isMoveTriggered) {
+            const sceneTree = getProjectState('sceneTree');
+            const point = this.context.getWorldCoordinates(event.clientX, event.clientY);
+            const node = CollisionDetector.findHit(point, sceneTree.root.children)
+            const ids = getSelectionState('ids');
+            ids.clear();
+            if (node?.id) ids.add(node.id)
+            setSelectionState({ ids })
+            // 切换回空闲状态
+            this.context.transitionTo(this.context.states.idle);
+            return;
+        }
         // 更新选框计算
         const ids = getSelectionState('ids')
         updateSelectionBoxs(ids)

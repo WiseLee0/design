@@ -24,7 +24,7 @@ export const benchmarkGenerateRndElements = (count: number) => {
     const h = rnd(20, 160);
     const x = rnd(0, 1200);
     const y = rnd(0, 1000);
-    const rotation = Math.random() * 360;
+    const rotation = isRect ? Math.random() * 360 : 0;
     const angle = (rotation * Math.PI) / 180;
     const cos = Math.cos(angle);
     const sin = Math.sin(angle);
