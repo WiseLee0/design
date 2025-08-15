@@ -3,7 +3,7 @@ import { ZoomMenuContainer } from "@/components/zoom-menu";
 import { BenchmarkGenerateContainer } from "./components/generate-container";
 import { benchmarkGenerateElements, benchmarkGenerateRndElements } from "./generate/element";
 
-export const BenchmarkPage = () => {
+export const TestPage = () => {
 
   return (
     <div className="flex relative w-screen h-screen">

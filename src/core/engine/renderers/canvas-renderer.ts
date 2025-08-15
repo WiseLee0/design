@@ -8,9 +8,9 @@ import { InteractionController } from "../interaction/interaction-controller";
 import { SelectionRendererFactory } from "./selection/renderer-factory";
 import { SceneTree } from "@/core/models/scene/scene-tree";
 import { SceneNode } from "@/core/models/scene/scene-node";
-import { hitMatrixNodeTest } from "@/utils/hit-test";
 import { debounce } from "@/utils/debounce";
 import { getPageState } from "@/store/page";
+import { ViewportCulling } from "@/core/engine/culling";
 import { getViewportState } from "@/store/viewport";
 
 class Renderer {
@@ -100,11 +100,17 @@ class Renderer {
     canvas.save();
 
     // 应用视口变换
-    const transform = getViewportState('transformMatrix');
+    const transform = getViewportState("transformMatrix");
     canvas.concat([
-      transform[0], transform[1], transform[4],
-      transform[2], transform[3], transform[5],
-      0, 0, 1,
+      transform[0],
+      transform[1],
+      transform[4],
+      transform[2],
+      transform[3],
+      transform[5],
+      0,
+      0,
+      1,
     ]);
 
     // 渲染场景树
@@ -134,39 +140,17 @@ class Renderer {
    */
   private renderNode(canvas: Canvas, node: SceneNode): void {
     // 视口剔除
-    if (this.shouldViewportCulling(node)) return;
+    if (ViewportCulling.shouldCull(node) && node.type !== "ROOT") return;
     // 不可见剔除
     if (!node.visible) return;
     const renderer = this.elementFactory.getRenderer(node);
     if (renderer) {
       renderer.render(this.canvasKit, canvas, node);
     }
-    if(node.children.length === 0) return;
+    if (node.children.length === 0) return;
     for (const child of node.children) {
       this.renderNode(canvas, child);
     }
-  }
-
-  /**
-   * 视口剔除，不在视口范围内的元素不渲染
-   */
-  shouldViewportCulling(node: SceneNode) {
-    if (node.type === "ROOT") return false;
-    const viewport = getViewportState();
-    const renderBox = node.getRenderBox();
-    // 都转换成世界坐标进行测试
-    return !hitMatrixNodeTest(
-      {
-        matrix: [1, 0, 0, 1, viewport.x, viewport.y],
-        width: viewport?.width,
-        height: viewport?.height,
-      },
-      {
-        matrix: [1, 0, 0, 1, renderBox.x, renderBox.y],
-        width: renderBox.width,
-        height: renderBox.height,
-      }
-    );
   }
 
   /**

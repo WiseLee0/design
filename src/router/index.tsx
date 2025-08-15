@@ -1,14 +1,14 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { CanvasPage } from "@/pages/canvas/index.tsx";
-import { BenchmarkPage } from "@/pages/benchmark";
+import { TestPage } from "@/pages/test";
 const router = createBrowserRouter([
   {
     path: "/",
     element: <CanvasPage />,
   },
   {
-    path: "/benchmark",
-    element: <BenchmarkPage />,
+    path: "/test",
+    element: <TestPage />,
   },
 ]);
 

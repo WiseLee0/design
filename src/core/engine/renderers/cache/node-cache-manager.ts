@@ -13,10 +13,10 @@ const CACHE_DEPENDENCIES: Record<string, string[]> = {
 };
 
 /**
- * 统一缓存管理器
+ * 节点缓存管理器
  * 负责管理节点的各种缓存属性，提供自动失效机制
  */
-export class CacheManager {
+export class NodeCacheManager {
   private cache = new Map<string, any>();
   private dirtyFlags = new Set<string>();
 

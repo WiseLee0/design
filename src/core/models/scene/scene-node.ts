@@ -3,7 +3,7 @@ import type { DesignElement, FillPaint } from './type';
 import { mat3, vec2 } from 'gl-matrix';
 import { hitGhostStrategies, hitPointStrategies } from './hit-strategies';
 import { deepClone } from '@/utils/deep-clone';
-import { CacheManager } from '@/utils/cache-manager';
+import { NodeCacheManager } from '@/core/engine/renderers/cache/node-cache-manager';
 import { calcNodeHoverPath } from '@/utils/path';
 import type { Path } from 'canvaskit-wasm';
 
@@ -32,7 +32,7 @@ export class SceneNode implements IHittable {
     private _element: DesignElement;
 
     // 统一缓存管理器
-    private cacheManager = new CacheManager();
+    private cacheManager = new NodeCacheManager();
 
     // 场景树引用
     private sceneTree?: ISceneTree;

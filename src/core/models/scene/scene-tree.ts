@@ -1,5 +1,6 @@
 import type { DesignElement } from './type';
 import { SceneNode } from './scene-node';
+import { ViewportCulling } from '@/core/engine/culling';
 
 /**
  * 场景树管理类
@@ -97,6 +98,9 @@ export class SceneTree {
 
         // 标记场景重建完成，触发变化通知
         this.markNodeDirty(this.root);
+
+        // 清除视口剔除缓存
+        ViewportCulling.clearCache();
     }
 
     private buildRecursive(el: DesignElement, parent: SceneNode, map: Map<string, SceneNode>) {

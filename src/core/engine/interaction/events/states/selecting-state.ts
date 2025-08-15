@@ -5,7 +5,7 @@ import { markRenderDirty } from '@/core/engine/renderers';
 import { getViewportState } from '@/store/viewport';
 import type { XYWH } from '@/core/models';
 import { CollisionDetector } from '@/core/engine/collision';
-import { getProjectState } from '@/store/project';
+import { ViewportCulling } from '@/core/engine/culling';
 
 /**
  * 框选状态 - 当用户在画布上按住左键拖动时进入此状态。
@@ -112,16 +112,20 @@ export class SelectingState extends BaseState {
 
     /**
      * 框选碰撞检测
+     * 使用视口剔除优化，只对视口内的元素进行碰撞检测
      */
     private _hitTest(box: XYWH) {
-        const sceneTree = getProjectState('sceneTree');
         const boundingBox = {
             x: box[0],
             y: box[1],
             width: box[2],
             height: box[3]
         }
-        const nodes = CollisionDetector.findIntersecting(boundingBox, sceneTree.root.children)
+        
+        // 先过滤掉视口外的节点，减少碰撞检测的计算量
+        const visibleNodes = ViewportCulling.getVisibleNodes();
+        const nodes = CollisionDetector.findIntersecting(boundingBox, visibleNodes);
+        
         setSelectionState({
             ids: new Set(nodes.map(item => item.id))
         })
