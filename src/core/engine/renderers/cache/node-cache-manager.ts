@@ -19,6 +19,7 @@ const CACHE_DEPENDENCIES: Record<string, string[]> = {
 export class NodeCacheManager {
   private cache = new Map<string, any>();
   private dirtyFlags = new Set<string>();
+  private dependencyMap: Map<string, Set<string>> | null = null;
 
   /**
    * 获取缓存值，如果缓存失效则重新计算
@@ -42,24 +43,76 @@ export class NodeCacheManager {
    */
   markDirty(dependency: string): void {
     this.dirtyFlags.add(dependency);
-
-    // 递归清除所有直接和间接依赖此项的缓存
-    this.clearDependentCaches(dependency);
+    
+    // 立即清除相关缓存，避免微任务开销
+    this.clearDependentCachesImmediate(dependency);
   }
 
   /**
-   * 递归清除依赖指定属性的所有缓存
+   * 立即清除依赖指定属性的所有缓存
    * @param dependency 依赖项名称
+   */
+  private clearDependentCachesImmediate(dependency: string): void {
+    // 使用静态缓存映射表，避免重复计算
+    const dependentCaches = this.getCachedDependentCaches(dependency);
+    
+    // 直接删除相关缓存，不使用递归
+    for (const cacheKey of dependentCaches) {
+      this.cache.delete(cacheKey);
+    }
+  }
+
+  /**
+   * 获取依赖指定属性的所有缓存键
+   * @param dependency 依赖项名称
+   * @returns 依赖该属性的所有缓存键（包括间接依赖）
+   */
+  private getCachedDependentCaches(dependency: string): Set<string> {
+    // 使用静态映射表缓存依赖关系，避免重复计算
+    if (!this.dependencyMap) {
+      this.buildDependencyMap();
+    }
+    
+    return this.dependencyMap!.get(dependency) || new Set();
+  }
+
+  /**
+   * 构建完整的依赖关系映射表（包括间接依赖）
+   */
+  private buildDependencyMap(): void {
+    this.dependencyMap = new Map();
+    
+    // 为每个依赖项构建完整的依赖缓存集合
+    const allDependencies = new Set<string>();
+    Object.values(CACHE_DEPENDENCIES).forEach(deps => 
+      deps.forEach(dep => allDependencies.add(dep))
+    );
+    
+    for (const dependency of allDependencies) {
+      const dependentCaches = new Set<string>();
+      this.collectAllDependentCaches(dependency, dependentCaches, new Set());
+      this.dependencyMap.set(dependency, dependentCaches);
+    }
+  }
+
+  /**
+   * 递归收集所有依赖指定属性的缓存键（包括间接依赖）
+   * @param dependency 依赖项名称
+   * @param result 结果集合
    * @param visited 已访问的缓存键，防止循环依赖
    */
-  private clearDependentCaches(dependency: string, visited = new Set<string>()): void {
+  private collectAllDependentCaches(
+    dependency: string, 
+    result: Set<string>, 
+    visited: Set<string>
+  ): void {
     for (const [cacheKey, deps] of Object.entries(CACHE_DEPENDENCIES)) {
       if (deps.includes(dependency) && !visited.has(cacheKey)) {
-        this.cache.delete(cacheKey);
+        result.add(cacheKey);
         visited.add(cacheKey);
         
-        // 递归清除依赖当前缓存键的其他缓存
-        this.clearDependentCaches(cacheKey, visited);
+        // 递归收集依赖当前缓存键的其他缓存
+        this.collectAllDependentCaches(cacheKey, result, visited);
       }
     }
   }
@@ -70,6 +123,7 @@ export class NodeCacheManager {
   clearAll(): void {
     this.cache.clear();
     this.dirtyFlags.clear();
+    this.dependencyMap = null;
   }
 
   /**
